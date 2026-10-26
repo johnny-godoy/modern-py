@@ -18,6 +18,10 @@ if grep -rniIF -f "$root/tests/forbidden-names.txt" --exclude-dir=.venv --exclud
   echo "The rendered project contains a forbidden name (tests/forbidden-names.txt)." >&2
   exit 1
 fi
+if (cd "$dest" && find . -path ./.venv -prune -o -path ./.git -prune -o -print) | grep -iF -f "$root/tests/forbidden-names.txt"; then
+  echo "The rendered project has a file whose name is forbidden (tests/forbidden-names.txt)." >&2
+  exit 1
+fi
 
 if [ "$checks" != "--no-checks" ]; then
   cd "$dest"
