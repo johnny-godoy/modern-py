@@ -1,7 +1,13 @@
 name: Template
 
-# Render each answer set of tests/answers/ and run the checks of the rendered project: just check, just test and the
-# docs build. A rendered project must pass them on the first run, with no manual step after copier copy.
+# Render each answer set of tests/answers/ and check the rendered project as its own CI would:
+#   render:   just check, just test and the docs build, and a grep for the names that no project may contain
+#   postgres: the migrations and the database tests of the db feature on a PostgreSQL service container
+#   proofs:   lake build of the Lean proofs of the proofs feature
+#   docker:   the image of the service profile
+#   update:   copier update from the previous tag to this commit, with no conflict, and the checks after it
+#   tables:   the tables that template/scripts/banned.toml generates are up to date in the template and the docs
+# A rendered project must pass on the first run, with no manual step after copier copy.
 on:
   push:
     branches: [main]
@@ -18,26 +24,123 @@ defaults:
   run:
     shell: bash
 
+env:
+  # Outside the checkout, so the rendered project is a git repository of its own.
+  RENDERED: ${{ github.workspace }}/../rendered
+
 jobs:
+  plan:
+    name: plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      answers: ${{ steps.answers.outputs.answers }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: List the answer sets
+        id: answers
+        run: echo "answers=$(find tests/answers -name '*.yml' -exec basename {} .yml \; | sort | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
+
+  tables:
+    name: tables
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: just check-tables
+
   render:
     name: render (${{ matrix.answers }})
+    needs: plan
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
       fail-fast: false
       matrix:
-        answers: [library, cli, service, data, db, ml, aws, text, proofs]
+        answers: ${{ fromJSON(needs.plan.outputs.answers) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          fetch-depth: 0
-      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
-      - uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3 # v4.0.0
-      - name: Set the git identity for the copier tasks
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - uses: ./.github/actions/setup
       - name: Render and check
         env:
           ANSWERS: ${{ matrix.answers }}
-        run: scripts/render.sh "$ANSWERS" "$RUNNER_TEMP/rendered"
+        run: scripts/render.sh "$ANSWERS" "$RENDERED"
+
+  postgres:
+    name: postgres (db)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # The service lives only for the job and listens on localhost, so it needs no password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Render without the checks
+        run: scripts/render.sh db "$RENDERED" --no-checks
+      - name: Run the migrations, then the database tests
+        run: cd "$RENDERED" && just migrate && just test-db
+
+  proofs:
+    name: proofs (lake build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Render without the checks
+        run: scripts/render.sh proofs "$RENDERED" --no-checks
+      - name: Install Lean
+        uses: leanprover/lean-action@24581d74d674803a25a81b10b059c5c0cdd344c6 # v1.6.2
+        with:
+          lake-package-directory: ${{ github.workspace }}/../rendered/proofs
+          build: "false"
+          use-github-cache: "false"
+      - name: Check the proofs
+        run: cd "$RENDERED" && just proofs
+
+  docker:
+    name: docker (service)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Render without the checks
+        run: scripts/render.sh service "$RENDERED" --no-checks
+      - name: Build the image and call the health route
+        run: |
+          cd "$RENDERED"
+          docker build -t sample-service .
+          docker run --detach --name service --publish 8000:8000 sample-service
+          for _ in $(seq 1 30); do curl --silent --fail http://127.0.0.1:8000/health && exit 0; sleep 1; done
+          docker logs service
+          exit 1
+
+  update:
+    name: copier update
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the update starts from the previous tag
+      - uses: ./.github/actions/setup
+      - name: Update a project of the previous tag to this commit
+        run: scripts/update_check.sh "$RENDERED"
+      - name: Check the updated project
+        run: |
+          if [ ! -d "$RENDERED" ]; then echo "No earlier tag, so no project to check."; exit 0; fi
+          cd "$RENDERED"
+          git add --all
+          just check
+          just test

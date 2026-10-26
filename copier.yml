@@ -27,7 +27,8 @@ _message_after_copy: |
 # The tasks run in the new project. `prek run --all-files` reads only the files that git knows, so the first copy
 # stages every file: the first `just check` then checks the whole project.
 _tasks:
-  - command: git rev-parse --git-dir > /dev/null 2>&1 || git init --quiet --initial-branch=main
+  # A project inside another repository still gets its own, so the staged files stay in the project.
+  - command: test -d .git || git init --quiet --initial-branch=main
   - command: uv lock --quiet
   - command: uv sync --quiet
   - command: uv run --frozen prek install
