@@ -1,0 +1,49 @@
+# Python-generated files
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+wheels/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.hypothesis/
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/worktrees/
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.mutation/
+
+# Built documentation
+site/
+{% if 'proofs' in features %}
+
+# Lean (proofs/)
+proofs/.lake/
+proofs/papers/**/*.pdf
+# Papers compiled by scripts/build_docs.py
+docs/proofs/
+{% endif %}
+{% if 'data' in profiles %}
+
+# Notebooks exported by scripts/build_docs.py
+docs/notebooks/
+{% endif %}

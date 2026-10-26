@@ -1,0 +1,113 @@
+# Tests of the rules in rules.yml. A comment that starts with the word ruleid marks a line that must match.
+# ruleid: {{ rule_prefix }}-no-kwargs-bag
+def bag(**options):
+    return options
+
+
+# ok: {{ rule_prefix }}-no-kwargs-bag
+def named(a, *, b=1):
+    return a, b
+
+
+def chain(x):
+    # ruleid: {{ rule_prefix }}-no-elif-chain-on-one-value
+    if x == 1:
+        return "a"
+    elif x == 2:
+        return "b"
+    elif x == 3:
+        return "c"
+    return "d"
+
+
+def two_cases(x):
+    # ok: {{ rule_prefix }}-no-elif-chain-on-one-value
+    if x == 1:
+        return "a"
+    elif x == 2:
+        return "b"
+    return "c"
+
+
+class Base:
+    def method(self):
+        # ruleid: {{ rule_prefix }}-no-not-implemented-stub
+        raise NotImplementedError
+
+
+def reads(path):
+    # ruleid: {{ rule_prefix }}-domain-does-no-io
+    return path.read_text()
+
+
+def shows(x):
+    # ruleid: {{ rule_prefix }}-domain-does-no-io
+    print(x)
+
+
+# ruleid: {{ rule_prefix }}-no-manual-beartype
+@beartype
+def decorated(x):
+    return x
+
+
+def bare_error(x):
+    if x < 0:
+        # ruleid: {{ rule_prefix }}-no-bare-value-error
+        raise ValueError("negative")
+    if x > 9:
+        # ruleid: {{ rule_prefix }}-no-bare-value-error
+        raise ValueError("large") from None
+    # ruleid: {{ rule_prefix }}-no-bare-value-error
+    raise ValueError
+
+
+def own_error(x):
+    if x < 0:
+        # ok: {{ rule_prefix }}-no-bare-value-error
+        raise EmptyInputError("negative")
+    try:
+        return int(x)
+    except ValueError:
+        # ok: {{ rule_prefix }}-no-bare-value-error
+        raise
+
+
+# ruleid: {{ rule_prefix }}-return-attrs-not-container
+def returns_dict(x) -> dict[str, float]:
+    return {"a": x}
+
+
+# ruleid: {{ rule_prefix }}-return-attrs-not-container
+def returns_tuple(x) -> tuple[str, float]:
+    return ("a", x)
+
+
+# ruleid: {{ rule_prefix }}-return-attrs-not-container
+def returns_list_of_tuples(x) -> list[tuple[float, str]]:
+    return [(x, "a")]
+
+
+# ruleid: {{ rule_prefix }}-return-attrs-not-container
+def returns_list_of_dicts(x) -> list[dict[str, float]]:
+    return [{"a": x}]
+
+
+# ok: {{ rule_prefix }}-return-attrs-not-container
+def returns_attrs(x) -> Fields:
+    return Fields(x)
+
+
+# ok: {{ rule_prefix }}-return-attrs-not-container
+def returns_homogeneous_tuple(x) -> tuple[float, ...]:
+    return (x,)
+
+
+# ok: {{ rule_prefix }}-return-attrs-not-container
+def returns_list(x) -> list[float]:
+    return [x]
+
+
+# ok: {{ rule_prefix }}-return-attrs-not-container
+def returns_suppressed(x) -> dict[str, float]:  # nosemgrep: {{ rule_prefix }}-return-attrs-not-container -- test of the opt-out
+    return {"a": x}

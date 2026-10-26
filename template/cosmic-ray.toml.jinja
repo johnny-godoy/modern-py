@@ -1,0 +1,14 @@
+[cosmic-ray]
+module-path = "src/{{ package_name }}"
+timeout = 40.0
+{% if 'service' in profiles %}
+# reason: recurring pattern in a service: the adapters and the api layer hold I/O code (HTTP, the database, files)
+# whose tests are slow and whose mutants mostly change timeouts and messages. The gate covers core and domain.
+excluded-modules = ["src/{{ package_name }}/adapters/*", "src/{{ package_name }}/api/*"]
+{% else %}
+excluded-modules = []
+{% endif %}
+test-command = "python -m pytest -x -q -p no:cacheprovider -o addopts='' tests/unit"
+
+[cosmic-ray.distributor]
+name = "local"

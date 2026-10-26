@@ -1,0 +1,66 @@
+# CLAUDE.md
+
+<project>
+{{ project_name }}: {{ description }}
+The project comes from the Copier template modern-py. `copier update` brings the template changes, so change a
+template file (a check script, a hook, a rule) in the template, not here, or the next update conflicts.
+</project>
+
+<commands>
+Requirements: Python {{ python_version }} or later, `uv` and `just`. The `justfile` is the one entry point: CI calls the
+same recipes, so a local run fails exactly when CI fails.
+
+```bash
+just                 # list the recipes
+just sync            # install the locked environment and the git hooks
+just check           # every prek hook: ruff, vulture, pyrefly, import-linter, semgrep, the layout and ignore checks
+just test            # unit tests in tests/unit; fails below 100% branch coverage
+just test-one tests/unit/{{ package_name }}/domain/test_summary.py::test_name   # one test, without the coverage gate
+just mutate          # cosmic-ray on the modules that changed since origin/main; CI requires zero survivors
+just docs            # build the docs as CI does: strict, and it fails on a docstring warning
+just changelog       # add a changelog fragment
+{% if 'service' in profiles %}
+just serve           # start the web service with Granian on http://127.0.0.1:8000
+{% endif %}
+{% if 'db' in features %}
+just migrate         # run the Piccolo migrations on the database of DATABASE_URL
+just test-db         # run the database tests on the database of DATABASE_URL (PostgreSQL in CI)
+{% endif %}
+{% if 'proofs' in features %}
+just proofs          # check the Lean proofs; needs elan, see .claude/rules/proofs.md
+{% endif %}
+```
+</commands>
+
+<layout>
+`src/{{ package_name }}/` follows ports and adapters. A layer imports only the layers below it:
+{% if 'service' in profiles %}`api` (the Litestar controllers), {% endif %}{% if 'cli' in profiles %}`cli` (the command line), {% endif %}`adapters` (I/O and vendor SDKs), `domain` (pure logic) and `core`
+(errors and types). Only `adapters` imports a vendor SDK. Read `.claude/rules/architecture.md` before you add a module.
+import-linter, `scripts/check_layout.py` and the semgrep rules in `semgrep/` enforce the layout, and each fails
+`just check`.
+</layout>
+
+<conventions>
+Rules in `.claude/rules/` load automatically. Follow them, and keep these points in mind:
+
+- Run `just check` and `just test` before you report a task as done. The hooks enforce the quality bar of the project.
+- Use the libraries of `.claude/rules/libraries.md`. ruff, `scripts/check_dependencies.py` and the layout check ban
+  the alternatives, so a banned import fails at once.
+- Return an attrs class, not a `dict` or a `tuple` of fields (`.claude/rules/types.md`). Semgrep enforces it.
+- `beartype` checks the type hints of `{{ package_name }}` at run time, so write exact hints (`.claude/rules/types.md`).
+- Ship each bug fix with a guard: a unit test or a semgrep rule that fails on the old code (`.claude/rules/bug-fixes.md`).
+- Commit in small steps, each with one purpose and a conventional commit message (`type(scope): description`).
+  Write the PR title the same way, and fill the PR template (`.claude/rules/commits-and-prs.md`). Hooks and CI check it.
+- Add a changelog fragment (`just changelog`) for each user-visible change. Leave `CHANGELOG.md` and the version
+  alone: the release workflow sets them after the merge (`.claude/rules/changelog-and-versioning.md`).
+- Write a reason next to each `noqa`, `type: ignore`, pragma, skipped test and config ignore (` -- reason`, or a
+  `# reason:` block in TOML). Fix the code or ask the user when a hook fails. Leave `scripts/check_ignores.py`,
+  `scripts/ignore_sites.py` and the hook unchanged.
+- Describe the code as it is now. Do not compare with an earlier version (`.claude/rules/writing-style.md`).
+- Write documentation in ASD-STE100 style, and write prompts to Anthropic's prompting guide (`writing-style.md`).
+- Ruff selects all rules with line length 120. Tests live in `tests/unit/{{ package_name }}/` and mirror `src/`.
+{% if 'proofs' in features %}
+- Back each exact mathematical claim ("optimal", "minimal", "exact") with a Lean proof and a Typst paper in `proofs/`,
+  and keep both true when the code changes (`.claude/rules/proofs.md`).
+{% endif %}
+</conventions>

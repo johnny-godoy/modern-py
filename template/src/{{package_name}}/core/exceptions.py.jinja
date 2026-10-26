@@ -1,0 +1,24 @@
+"""The errors of ``{{ package_name }}``.
+
+Every error that ``{{ package_name }}`` raises on purpose derives from ``{{ error_class }}``, so
+``except {{ error_class }}`` catches all of them. An error for a bad value also derives from ``ValueError``.
+"""
+
+
+class {{ error_class }}(Exception):
+    """The base class of the errors that ``{{ package_name }}`` raises."""
+
+
+class EmptyInputError({{ error_class }}, ValueError):
+    """An input is empty, but the operation needs at least one item."""
+
+    def __init__(self, name: str) -> None:
+        """Build the message from the name of the input.
+
+        Parameters
+        ----------
+        name: str
+            The name of the empty input.
+
+        """
+        super().__init__(f"{name} is empty, but it must have at least one item")

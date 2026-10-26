@@ -1,0 +1,118 @@
+# In-house rules for the design points that ruff and import-linter cannot see. Each rule has a test in
+# semgrep/rules.py; run `uv run semgrep --test semgrep` to check them. The layer limits live in pyproject.toml
+# ([tool.importlinter]); the rules for them are in .claude/rules/architecture.md.
+rules:
+  - id: {{ rule_prefix }}-no-kwargs-bag
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A **kwargs parameter hides what the function reads (SOLID: I). Take the values as named parameters or as an
+      attrs option class.
+    pattern: |
+      def $F(..., **$K):
+          ...
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-no-elif-chain-on-one-value
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A chain that tests one value against three or more cases needs an edit for each new case (SOLID: O). Look the
+      case up in a table or use one class per case.
+    pattern: |
+      if $X == $A:
+          ...
+      elif $X == $B:
+          ...
+      elif $X == $C:
+          ...
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-no-not-implemented-stub
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A method that raises NotImplementedError breaks the promise of its base class (SOLID: L). Make the method
+      abstract with abc.abstractmethod, or remove it from the base class.
+    pattern-either:
+      - pattern: raise NotImplementedError
+      - pattern: raise NotImplementedError(...)
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-domain-does-no-io
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Code in core and domain runs in a plain unit test (SOLID: D). Read the file, print or call the service in the
+      adapters and pass the result in.
+    pattern-either:
+      - pattern: print(...)
+      - pattern: open(...)
+      - pattern: $P.read_text(...)
+      - pattern: $P.read_bytes(...)
+      - pattern: $P.write_text(...)
+      - pattern: $P.write_bytes(...)
+      - pattern: os.environ
+      - pattern: os.getenv(...)
+    paths:
+      include: ["/src/*/core/", "/src/*/domain/"]
+
+  - id: {{ rule_prefix }}-no-manual-beartype
+    languages: [python]
+    severity: ERROR
+    message: >-
+      beartype_this_package already checks every function in {{ package_name }}. Remove the decorator
+      (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: |
+          @beartype
+          def $F(...): ...
+      - pattern: |
+          @beartype.beartype
+          def $F(...): ...
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-no-bare-value-error
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Raise a subclass of {{ error_class }} from {{ package_name }}.core.exceptions, so callers can catch the errors of
+      {{ package_name }} apart from the errors of other code. Give an error class for a bad value ValueError as a
+      second base, so `except ValueError` catches it too.
+    pattern-either:
+      - pattern: raise ValueError
+      - pattern: raise ValueError(...)
+      - pattern: raise ValueError(...) from $CAUSE
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-return-attrs-not-container
+    languages: [python]
+    severity: ERROR
+    message: >-
+      Return an attrs class, not a dict, a tuple of fields or a list of them, so a type checker knows each field and a
+      caller reads it by name. If the keys are data (not a fixed set of fields) or the container is the point (a
+      JSON fragment, a homogeneous interval), add `# nosemgrep: {{ rule_prefix }}-return-attrs-not-container -- <reason>` to the
+      def line. See .claude/rules/types.md.
+    patterns:
+      - pattern: |
+          def $F(...) -> $R:
+              ...
+      - metavariable-pattern:
+          metavariable: $R
+          pattern-either:
+            - pattern: dict[...]
+            - pattern: list[dict[...]]
+            - pattern: tuple[...]
+            - pattern: list[tuple[...]]
+      # a tuple of one type and any length (`tuple[float, ...]`) is a sequence, not a bag of fields
+      - metavariable-regex:
+          metavariable: $R
+          regex: '^(?!tuple\[[^,\[\]]+,\s*\.\.\.\]$)'
+      - focus-metavariable: $R
+    paths:
+      include: ["/src/"]

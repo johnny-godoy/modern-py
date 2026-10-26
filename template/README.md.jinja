@@ -1,0 +1,41 @@
+# {{ project_name }}
+
+<!-- --8<-- [start:intro] -->
+{{ description }}
+<!-- --8<-- [end:intro] -->
+
+## Install
+
+<!-- --8<-- [start:install] -->
+```bash
+uv add {{ distribution_name }}
+```
+<!-- --8<-- [end:install] -->
+
+## Development
+
+<!-- --8<-- [start:development] -->
+Install [uv](https://docs.astral.sh/uv/) and [just](https://just.systems/). Then run `just sync` to install the
+environment and the git hooks. `just` lists every recipe.
+
+| Recipe | What it does |
+| --- | --- |
+| `just check` | Runs every prek hook on every file. |
+| `just test` | Runs the unit tests with the 100% branch coverage gate. |
+| `just test-one <test>` | Runs one test without the coverage gate. |
+| `just mutate` | Runs mutation testing on the modules that changed since `origin/main`. |
+| `just docs` | Builds the docs as CI does. |
+| `just changelog` | Adds a changelog fragment. |
+{% if 'service' in profiles %}
+| `just serve` | Starts the web service on a local port. |
+{% endif %}
+{% if 'db' in features %}
+| `just migrate` | Runs the database migrations. |
+| `just test-db` | Runs the database tests on the database of `DATABASE_URL`. |
+{% endif %}
+{% if 'proofs' in features %}
+| `just proofs` | Checks the Lean proofs. |
+{% endif %}
+
+`CONTRIBUTING.md` has the rules for changes, commits and pull requests.
+<!-- --8<-- [end:development] -->

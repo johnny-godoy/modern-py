@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use {{ project_name }} in your work, cite it with the metadata in this file."
+title: "{{ project_name }}"
+abstract: "{{ description }}"
+type: software
+{% if license != 'Proprietary' %}
+license: {{ license }}
+{% endif %}
+repository-code: "https://github.com/{{ github_owner }}/{{ repo_name }}"
+url: "https://{{ github_owner }}.github.io/{{ repo_name }}/"
+authors:
+  - name: "{{ author_name }}"
+    email: {{ author_email }}

@@ -1,0 +1,191 @@
+# `prek install` installs both shims. The commit-msg hooks check the message of each commit
+# (.claude/rules/commits-and-prs.md). Every other hook runs at the pre-commit stage only, so a message check does not
+# run the whole suite again.
+default_install_hook_types = ["pre-commit", "commit-msg"]
+default_stages = ["pre-commit"]
+
+exclude = '''(?x)^(
+  (.*/)?\.venv/|
+  (.*/)?__pycache__/
+)'''
+
+[[repos]]
+repo = "https://github.com/pre-commit/pre-commit-hooks"
+rev = "v6.0.0"
+hooks = [
+  # reason: uv.lock is generated and grows with the dependency tree, so the 500 KB limit cannot apply to it.
+  { id = "check-added-large-files", exclude = '^uv\.lock$', priority = 0 },
+  { id = "check-ast", priority = 0 },
+  { id = "check-case-conflict", priority = 0 },
+  { id = "check-executables-have-shebangs", priority = 0 },
+  { id = "check-illegal-windows-names", priority = 0 },
+  { id = "check-merge-conflict", args = ["--assume-in-merge"], priority = 0 },
+  { id = "check-symlinks", priority = 0 },
+  { id = "check-toml", priority = 0 },
+  { id = "check-yaml", priority = 0 },
+  { id = "destroyed-symlinks", priority = 0 },
+  { id = "name-tests-test", args = ["--pytest-test-first"], priority = 0 },
+  { id = "detect-private-key", priority = 0 },
+  { id = "fix-byte-order-marker", priority = 10 },
+  { id = "mixed-line-ending", priority = 11 },
+  { id = "trailing-whitespace", priority = 12 },
+  { id = "end-of-file-fixer", priority = 13 },
+]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "check-json5", priority = 0 },
+]
+
+[[repos]]
+repo = "https://github.com/rhysd/actionlint"
+rev = "v1.7.7"
+hooks = [
+  { id = "actionlint", args = ["-shellcheck="], files = "^\\.github/workflows/.*\\.ya?ml$", priority = 40 },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  {
+    id = "ruff-format",
+    name = "ruff format",
+    language = "system",
+    entry = "uv run ruff format",
+    types_or = ["python", "pyi"],
+    priority = 40,
+  },
+  {
+    id = "ruff-check",
+    name = "ruff check",
+    language = "system",
+    entry = "uv run ruff check --fix --no-unsafe-fixes",
+    types_or = ["python", "pyi"],
+    priority = 41,
+  },
+  {
+    id = "vulture",
+    name = "vulture",
+    language = "system",
+    entry = "uv run vulture src tests scripts .github/scripts",
+    types = ["python"],
+    pass_filenames = false,
+    priority = 42,
+  },
+  {
+    id = "pyrefly",
+    name = "pyrefly",
+    language = "system",
+    entry = "uv run pyrefly check src tests scripts .github/scripts",
+    types = ["python"],
+    pass_filenames = false,
+    priority = 70,
+  },
+  {
+    id = "pyrefly-coverage",
+    name = "pyrefly type coverage is 100%",
+    language = "system",
+    entry = "uv run pyrefly coverage check src tests scripts .github/scripts",
+    types = ["python"],
+    pass_filenames = false,
+    priority = 71,
+  },
+  {
+    id = "check-ignores",
+    name = "workarounds carry a written reason",
+    language = "system",
+    entry = "uv run python -m scripts.check_ignores",
+    files = "\\.(py|toml)$",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "check-exclusions",
+    name = "uv cooldown exemptions are still needed",
+    language = "system",
+    entry = "uv run python -m scripts.check_exclusions",
+    files = "(^|/)(pyproject\\.toml|uv\\.lock)$",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "check-changelog",
+    name = "the changelog, its fragments and the version agree",
+    language = "system",
+    entry = "uv run python -m scripts.check_changelog",
+    files = "^(CHANGELOG\\.md|pyproject\\.toml|changelog\\.d/.*)$",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "import-linter",
+    name = "import-linter: layers and vendor SDK limits",
+    language = "system",
+    entry = "uv run lint-imports",
+    files = "\\.py$|^pyproject\\.toml$",
+    pass_filenames = false,
+    priority = 60,
+  },
+  {
+    id = "check-layout",
+    name = "directory layout follows the rules",
+    language = "system",
+    entry = "uv run python -m scripts.check_layout",
+    files = "^(src|tests/unit)/|^pyproject\\.toml$",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "semgrep-rules-test",
+    name = "semgrep: tests of the in-house rules",
+    language = "system",
+    entry = "uv run semgrep --test semgrep --metrics=off",
+    files = "^semgrep/",
+    pass_filenames = false,
+    priority = 60,
+  },
+  {
+    id = "semgrep",
+    name = "semgrep: in-house design rules",
+    language = "system",
+    entry = "uv run semgrep scan --config semgrep/rules.yml --error --quiet --metrics=off --disable-version-check src tests scripts{{ ' notebooks' if 'data' in profiles }}",
+    files = "^(semgrep/|src/|tests/|scripts/|notebooks/)|^\\.semgrepignore$",
+    pass_filenames = false,
+    priority = 60,
+  },
+  {
+    id = "check-ruleset",
+    name = "required checks of the ruleset report on every pull request",
+    language = "system",
+    entry = "uv run python -m scripts.check_ruleset",
+    files = "^\\.github/(rulesets/.*\\.json|workflows/.*\\.ya?ml)$",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "commitizen",
+    name = "commit message: conventional commit",
+    language = "system",
+    entry = "uv run --frozen --only-group commits cz check -l 72 --commit-msg-file",
+    stages = ["commit-msg"],
+    priority = 0,
+  },
+  {
+    id = "commit-style",
+    name = "commit message: subject style",
+    language = "system",
+    entry = "uv run --frozen --only-group commits python -m scripts.check_commits --message-file",
+    stages = ["commit-msg"],
+    priority = 0,
+  },
+  {
+    id = "uv-lock-check",
+    name = "uv lock --check",
+    language = "system",
+    entry = "uv lock --check",
+    files = "^(pyproject\\.toml|uv\\.lock)$",
+    pass_filenames = false,
+    priority = 0,
+  },
+]
