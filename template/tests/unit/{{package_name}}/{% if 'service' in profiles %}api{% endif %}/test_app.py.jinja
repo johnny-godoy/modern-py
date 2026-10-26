@@ -1,0 +1,12 @@
+"""Tests for the app factory."""
+
+from litestar import Litestar
+
+from {{ package_name }}.api.app import create_app
+
+
+def test_create_app_returns_a_new_app_with_the_health_route() -> None:
+    app = create_app()
+    assert isinstance(app, Litestar)
+    assert app is not create_app()
+    assert "/health" in {route.path for route in app.routes}

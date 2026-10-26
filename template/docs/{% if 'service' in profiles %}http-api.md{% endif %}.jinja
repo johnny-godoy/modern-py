@@ -1,0 +1,12 @@
+# HTTP API
+
+Start the service with `just serve`, or build the image with `docker build -t {{ distribution_name }} .`. Granian
+serves the Litestar app on port 8000. Litestar writes the OpenAPI schema at `/schema`.
+
+| Route | Method | Response |
+| --- | --- | --- |
+| `/health` | `GET` | `{"status": "ok", "version": "<version>"}` |
+
+::: {{ package_name }}.api.app
+
+::: {{ package_name }}.api.health

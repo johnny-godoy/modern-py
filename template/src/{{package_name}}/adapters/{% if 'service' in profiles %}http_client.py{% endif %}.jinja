@@ -1,0 +1,33 @@
+"""Read JSON from an HTTP service: an example of an adapter that calls the network with retries."""
+
+import aiohttp
+import orjson
+import stamina
+
+# The attempts and the timeout bound the total wait of one call: the caller gets an error and not a hang.
+ATTEMPTS = 3
+TIMEOUT_SECONDS = 10.0
+
+
+@stamina.retry(on=aiohttp.ClientError, attempts=ATTEMPTS, timeout=TIMEOUT_SECONDS)
+async def fetch_json(session: aiohttp.ClientSession, url: str) -> object:
+    """Read the JSON body of a URL, and try again after a network error or an error status.
+
+    When every attempt fails, the function raises the ``aiohttp.ClientError`` of the last attempt.
+
+    Parameters
+    ----------
+    session: aiohttp.ClientSession
+        The session, which holds the pool of connections. The caller opens and closes it.
+    url: str
+        The URL.
+
+    Returns
+    -------
+    object
+        The parsed body.
+
+    """
+    async with session.get(url, raise_for_status=True) as response:
+        body: object = orjson.loads(await response.read())
+    return body

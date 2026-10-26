@@ -1,0 +1,36 @@
+"""The health route, which a load balancer or an orchestrator calls to see that the service runs."""
+
+from importlib.metadata import version
+
+import msgspec
+from litestar import get
+
+
+class Health(msgspec.Struct, frozen=True):
+    """The body of the health response.
+
+    Attributes
+    ----------
+    status: str
+        ``ok`` while the service runs.
+    version: str
+        The installed version of the service.
+
+    """
+
+    status: str
+    version: str
+
+
+# The handler does no I/O, so it runs on the event loop and not in a worker thread.
+@get("/health", sync_to_thread=False)
+def health() -> Health:
+    """Report that the service runs, with its version.
+
+    Returns
+    -------
+    Health
+        The status and the version.
+
+    """
+    return Health(status="ok", version=version("{{ distribution_name }}"))

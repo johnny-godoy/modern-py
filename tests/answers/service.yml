@@ -1,0 +1,9 @@
+project_name: Sample Service
+package_name: sample_service
+description: A sample web service.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-service
+profiles: [service]
+features: []

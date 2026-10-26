@@ -11,3 +11,9 @@
 ## Summary files
 
 ::: {{ package_name }}.adapters.summary_file
+{% if 'service' in profiles %}
+
+## HTTP client
+
+::: {{ package_name }}.adapters.http_client
+{% endif %}

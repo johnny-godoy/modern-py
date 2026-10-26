@@ -1,0 +1,19 @@
+"""The Litestar app of ``{{ distribution_name }}``."""
+
+from litestar import Litestar
+
+from {{ package_name }}.api.health import health
+
+
+def create_app() -> Litestar:
+    """Create the app with every route.
+
+    Granian calls this factory (``just serve``), and the tests call it for a fresh app each time.
+
+    Returns
+    -------
+    Litestar
+        The app.
+
+    """
+    return Litestar(route_handlers=[health])

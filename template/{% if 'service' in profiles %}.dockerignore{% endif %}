@@ -1,0 +1,8 @@
+# Only the files that the image needs go to the build, so a local change elsewhere does not break the cache.
+*
+!pyproject.toml
+!uv.lock
+!README.md
+!LICENSE
+!src/
+**/__pycache__

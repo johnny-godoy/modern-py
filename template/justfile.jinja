@@ -45,3 +45,9 @@ docs-serve:
 # Add a changelog fragment for a change that users can see.
 changelog:
     uv run --frozen scriv create
+{% if 'service' in profiles %}
+
+# Start the web service with Granian on http://127.0.0.1:8000.
+serve port="8000":
+    uv run --frozen granian --interface asgi --factory --port {% raw %}{{port}}{% endraw %} {{ package_name }}.api.app:create_app
+{% endif %}

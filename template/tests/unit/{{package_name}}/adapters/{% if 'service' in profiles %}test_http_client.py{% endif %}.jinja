@@ -1,0 +1,100 @@
+"""Tests for the HTTP adapter, against a real HTTP server on localhost."""
+
+from collections.abc import AsyncIterator, Iterator
+
+import aiohttp
+import attrs
+import pytest
+import stamina
+from aiohttp import web
+from aiohttp.test_utils import TestServer
+
+from {{ package_name }}.adapters import http_client
+
+pytestmark = [pytest.mark.anyio, pytest.mark.usefixtures("no_wait")]
+# no server listens on port 1, so a request fails at once with a connection error
+CLOSED_URL = "http://127.0.0.1:1/data"
+
+
+@attrs.frozen
+class Server:
+    """A local server that answers each request with the next planned reply.
+
+    Attributes
+    ----------
+    url: str
+        The URL of the route.
+    replies: list[tuple[int, bytes]]
+        The status and the body of each reply, in order. A list, because the tests append to it.
+
+    """
+
+    url: str
+    replies: list[tuple[int, bytes]]
+
+
+@pytest.fixture
+def no_wait() -> Iterator[None]:
+    """Turn off the waits of stamina, so a retry is instant, and keep the number of attempts.
+
+    Yields
+    ------
+    None
+        Control to the test.
+
+    """
+    stamina.set_testing(True, attempts=http_client.ATTEMPTS)
+    yield
+    stamina.set_testing(False)
+
+
+@pytest.fixture
+async def server() -> AsyncIterator[Server]:
+    """Start a local server with one route.
+
+    Yields
+    ------
+    Server
+        The URL and the planned replies, which the test fills.
+
+    """
+    replies: list[tuple[int, bytes]] = []
+
+    async def reply(_request: web.Request) -> web.Response:  # ruff: ignore[unused-async] -- aiohttp awaits each handler
+        status, body = replies.pop(0)
+        return web.Response(status=status, body=body)
+
+    app = web.Application()
+    app.router.add_get("/data", reply)
+    async with TestServer(app) as test_server:
+        yield Server(url=str(test_server.make_url("/data")), replies=replies)
+
+
+@pytest.fixture
+async def session() -> AsyncIterator[aiohttp.ClientSession]:
+    """Open a client session.
+
+    Yields
+    ------
+    aiohttp.ClientSession
+        The session, closed after the test.
+
+    """
+    async with aiohttp.ClientSession() as client:
+        yield client
+
+
+async def test_fetch_json_returns_the_parsed_body(server: Server, session: aiohttp.ClientSession) -> None:
+    server.replies.append((200, b'{"a": [1, 2]}'))
+    assert await http_client.fetch_json(session, server.url) == {"a": [1, 2]}
+
+
+async def test_fetch_json_tries_again_after_an_error_status(server: Server, session: aiohttp.ClientSession) -> None:
+    server.replies.extend([(503, b""), (200, b"[]")])
+    assert await http_client.fetch_json(session, server.url) == []
+    assert server.replies == []
+
+
+async def test_fetch_json_raises_after_the_last_attempt(session: aiohttp.ClientSession) -> None:
+    with pytest.raises(aiohttp.ClientConnectionError):
+        await http_client.fetch_json(session, CLOSED_URL)

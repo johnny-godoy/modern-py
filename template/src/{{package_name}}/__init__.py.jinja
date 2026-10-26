@@ -8,7 +8,19 @@ from beartype.claw import beartype_this_package
 # The hook must run before any submodule import, or those modules stay unchecked.
 # The numeric tower lets an int satisfy a float hint, as PEP 484 says.
 # Checking annotated variables is off, because structlog's lazy logger proxy does not match its own logger type.
+{% if 'service' in profiles %}
+# The api package is skipped: a Litestar route decorator returns a handler object, which the hook would wrap as a
+# plain function, and Litestar checks each request and response against its msgspec schema itself.
+beartype_this_package(  # ruff: ignore[non-empty-init-module] -- the hook must run before the submodule imports below
+    conf=BeartypeConf(
+        is_pep484_tower=True,
+        claw_is_pep526=False,
+        claw_skip_package_names=("{{ package_name }}.api",),
+    ),
+)
+{% else %}
 beartype_this_package(conf=BeartypeConf(is_pep484_tower=True, claw_is_pep526=False))  # ruff: ignore[non-empty-init-module] -- the hook must run before the submodule imports below
+{% endif %}
 
 from {{ package_name }}.core.exceptions import {{ ['EmptyInputError', error_class] | sort | join(', ') }}  # ruff: ignore[module-import-not-at-top-of-file] -- the beartype hook must run first
 

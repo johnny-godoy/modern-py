@@ -138,10 +138,10 @@ imports = ["requests", "httpx", "urllib3"]
 dependencies = ["requests", "urllib3"]
 
 [[ban]]
-need = "HTTP mocks in tests"
-use = "aioresponses"
-instead_of = "responses, respx"
-reason = "It mocks aiohttp."
+need = "HTTP servers in tests"
+use = "the aiohttp test server (`aiohttp.test_utils.TestServer`)"
+instead_of = "responses, respx, aioresponses"
+reason = "It serves real HTTP on localhost, so a test runs the real client code. aioresponses 0.7.9 fails with aiohttp 3.14."
 dependencies = ["responses", "respx"]
 
 [[ban]]

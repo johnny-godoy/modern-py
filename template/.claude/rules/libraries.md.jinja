@@ -30,7 +30,7 @@ run `uv run python -m scripts.sync_banned`.
 | Web framework | Litestar | FastAPI, Django, Flask | Faster, msgspec-native, a real dependency injection system and an active team. | Import ban: `fastapi`, `django`, `flask`, `starlette`; Dependency ban: `fastapi`, `django`, `flask` |
 | ASGI server | Granian | uvicorn, daphne, hypercorn | Rust I/O, and one binary for HTTP/1, HTTP/2 and WebSockets. | Dependency ban: `uvicorn`, `daphne`, `hypercorn`, `gunicorn` |
 | HTTP client | aiohttp | requests, httpx, urllib3 | A mature, fast asyncio client with connection pooling. httpx stays allowed as a dependency of the Litestar test client. | Import ban: `requests`, `httpx`, `urllib3`; Dependency ban: `requests`, `urllib3` |
-| HTTP mocks in tests | aioresponses | responses, respx | It mocks aiohttp. | Dependency ban: `responses`, `respx` |
+| HTTP servers in tests | the aiohttp test server (`aiohttp.test_utils.TestServer`) | responses, respx, aioresponses | It serves real HTTP on localhost, so a test runs the real client code. aioresponses 0.7.9 fails with aiohttp 3.14. | Dependency ban: `responses`, `respx` |
 | AWS | aioboto3 | boto3 | It does not block the event loop. botocore stays allowed as a dependency of aioboto3. | Import ban: `boto3`; Dependency ban: `boto3` |
 | AWS mocks in tests | moto in server mode | hand-written fakes | It speaks the real AWS protocol to aioboto3. | Rule only |
 | Retries | stamina | tenacity, backoff, hand-written loops | Safe defaults, jitter, a test mode and structlog integration. | Import ban: `tenacity`, `backoff`; Dependency ban: `tenacity`, `backoff`; semgrep rule `no-sleep-loop` (`while True` with `sleep` in `src/`) |
@@ -87,6 +87,10 @@ run `uv run python -m scripts.sync_banned`.
 - Retry a call that can fail for a moment with `@stamina.retry(on=..., attempts=...)`. Tests call
   `stamina.set_testing(True)`, so a retry does not wait.
 - Write async tests with `@pytest.mark.anyio`.
+{% if 'service' in profiles %}
+- The hook skips `{{ package_name }}.api`, because a Litestar route decorator returns a handler object that the hook
+  would wrap as a plain function. Litestar checks each request and response against its msgspec schema.
+{% endif %}
 
 ## Exceptions
 
