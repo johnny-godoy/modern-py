@@ -92,6 +92,14 @@ run `uv run python -m scripts.sync_banned`.
   would wrap as a plain function. Litestar checks each request and response against its msgspec schema.
 {% endif %}
 
+{% if 'text' in features %}
+## Large text (`stringzilla`)
+
+- Use `stringzilla.Str` for search, split and hashing on text of many megabytes. It works on the bytes in place,
+  with SIMD, and it copies nothing.
+- Keep `str` for short text, because a conversion costs more than it saves there. Measure before you switch.
+
+{% endif %}
 ## Exceptions
 
 - `.github/scripts/ci_report.py` runs under the runner's bare `python3` with no project environment, so it stays

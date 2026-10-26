@@ -1,0 +1,9 @@
+project_name: Sample Text
+package_name: sample_text
+description: A sample library for large text.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-text
+profiles: []
+features: [text]
