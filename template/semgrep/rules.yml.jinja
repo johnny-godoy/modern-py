@@ -116,3 +116,65 @@ rules:
       - focus-metavariable: $R
     paths:
       include: ["/src/"]
+
+  - id: {{ rule_prefix }}-no-naive-now
+    languages: [python]
+    severity: ERROR
+    message: >-
+      datetime.now() and datetime.utcnow() return a naive or a local time that hides its zone. Use
+      whenever.Instant.now() for an instant, or a whenever type with a zone (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: datetime.now(...)
+      - pattern: datetime.utcnow(...)
+      - pattern: datetime.datetime.now(...)
+      - pattern: datetime.datetime.utcnow(...)
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-no-sleep-loop
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A `while True` loop with a sleep is a hand-written retry with no jitter, no limit and no test mode. Use
+      @stamina.retry (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: |
+          while True:
+              ...
+              time.sleep(...)
+              ...
+      - pattern: |
+          while True:
+              ...
+              await asyncio.sleep(...)
+              ...
+      - pattern: |
+          while True:
+              ...
+              await anyio.sleep(...)
+              ...
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-structured-concurrency
+    languages: [python]
+    severity: ERROR
+    message: >-
+      asyncio.gather and asyncio.create_task start tasks that can outlive their caller or hide an error. Start them
+      in an anyio task group (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: asyncio.gather(...)
+      - pattern: asyncio.create_task(...)
+    paths:
+      include: ["/src/"]
+
+  - id: {{ rule_prefix }}-skops-load-trusted-true
+    languages: [python]
+    severity: ERROR
+    message: >-
+      trusted=True makes skops.io load every type in the file, so the file can run code. Pass the list of the types
+      that you trust, after get_untrusted_types shows what the file holds (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: skops.io.load(..., trusted=True, ...)
+      - pattern: sio.load(..., trusted=True, ...)
+      - pattern: load(..., trusted=True, ...)

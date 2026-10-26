@@ -9,7 +9,7 @@ by tool, so they can be reviewed in one place. Run it as a module from the repo 
 The report is generated, so do not commit it or edit it by hand.
 """
 
-import argparse
+import argparse  # ruff: ignore[banned-api] -- the scripts run with the dev group only, which has no command-line library
 import itertools
 import sys
 from collections.abc import Sequence

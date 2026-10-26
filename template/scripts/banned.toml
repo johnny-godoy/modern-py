@@ -1,0 +1,273 @@
+# The libraries that the project replaces, with the replacement and the reason. One file feeds every guard, so the
+# guards and the rule cannot disagree:
+#
+# - `imports`: ruff bans each module with flake8-tidy-imports (banned-api). scripts/sync_banned.py writes the table into
+#   pyproject.toml.
+# - `dependencies`: scripts/check_dependencies.py fails on each name in the direct dependencies or a dependency group.
+# - `files`: scripts/check_layout.py fails on each file that matches a glob.
+# - `guard`: a guard that is not one of the three above, for example a semgrep rule. "Rule only" means that the choice
+#   depends on the project, so no tool can judge it.
+#
+# scripts/sync_banned.py also writes the table of .claude/rules/libraries.md from this file. The sync-banned hook fails
+# when a generated table is out of date. Run `uv run python -m scripts.sync_banned` to write them again.
+
+[[ban]]
+need = "Packaging, environments"
+use = "uv"
+instead_of = "pip, poetry, pipenv"
+reason = "One fast tool, a lockfile and the 7-day cooldown."
+dependencies = ["pip-tools", "pipenv", "poetry"]
+files = ["requirements*.txt", "setup.py", "setup.cfg", "poetry.lock", "Pipfile", "Pipfile.lock"]
+
+[[ban]]
+need = "Git hooks"
+use = "prek"
+instead_of = "pre-commit"
+reason = "Faster, a TOML config and hook priorities."
+dependencies = ["pre-commit"]
+files = [".pre-commit-config.yaml"]
+
+[[ban]]
+need = "Lint and format"
+use = "ruff (select ALL)"
+instead_of = "black, isort, flake8, pylint"
+reason = "One tool and one config."
+dependencies = ["black", "isort", "flake8", "pylint", "autopep8", "yapf"]
+
+[[ban]]
+need = "Static types"
+use = "pyrefly (strict)"
+instead_of = "mypy"
+reason = "Speed and a check of the type coverage."
+dependencies = ["mypy", "pyright"]
+
+[[ban]]
+need = "Run-time types"
+use = "beartype"
+instead_of = "typeguard"
+reason = "Near-zero overhead and a hook that covers the whole package."
+imports = ["typeguard"]
+dependencies = ["typeguard"]
+
+[[ban]]
+need = "Logging"
+use = "structlog"
+instead_of = "logging, loguru, `print`"
+reason = "Structured events that tests read with `capture_logs`."
+imports = ["logging", "loguru"]
+dependencies = ["loguru"]
+guard = "ruff `print` rule (T201)"
+
+[[ban]]
+need = "JSON"
+use = "orjson"
+instead_of = "json, ujson, simplejson"
+reason = "Speed and correct types."
+imports = ["json", "ujson", "simplejson"]
+dependencies = ["ujson", "simplejson"]
+
+[[ban]]
+need = "Domain data classes"
+use = "attrs"
+instead_of = "dataclasses"
+reason = "Validators, slots and frozen classes."
+imports = ["dataclasses"]
+
+[[ban]]
+need = "Wire schemas (API bodies, config files, messages)"
+use = "msgspec"
+instead_of = "pydantic"
+reason = "Litestar supports it natively, it is much faster, and it keeps validation at the edge. attrs stays the domain type."
+imports = ["pydantic", "pydantic_settings"]
+dependencies = ["pydantic", "pydantic-settings"]
+
+[[ban]]
+need = "Serialization of objects"
+use = "msgspec, orjson"
+instead_of = "pickle, shelve, dill"
+reason = "pickle runs code when it loads a file."
+imports = ["pickle", "shelve", "dill", "cloudpickle", "joblib"]
+dependencies = ["dill", "cloudpickle", "joblib"]
+files = ["*.pkl", "*.pickle", "*.joblib"]
+
+[[ban]]
+need = "Saved ML models"
+use = "ONNX (skl2onnx, onnxmltools, `torch.onnx`), and skops.io when no ONNX converter exists for the model"
+instead_of = "pickle, joblib, cloudpickle, dill"
+reason = "ONNX is portable, runs in onnxruntime without the training stack and holds no code. skops.io loads only the types that you trust."
+guard = "The pickle bans above; semgrep rule `skops-load-trusted-true`"
+
+[[ban]]
+need = "Database ORM"
+use = "Piccolo"
+instead_of = "SQLAlchemy, SQLModel, Django ORM, Tortoise"
+reason = "Async-native, a typed query builder, migrations and an admin in one package, and it works with Litestar. Convert rows to msgspec Structs in the adapter, because the pydantic ban also covers `create_pydantic_model`."
+imports = ["sqlalchemy", "sqlmodel", "tortoise", "peewee"]
+dependencies = ["sqlalchemy", "sqlmodel", "tortoise-orm", "peewee"]
+
+[[ban]]
+need = "Date and time"
+use = "whenever"
+instead_of = "datetime arithmetic, arrow, pendulum, pytz"
+reason = "Distinct types for instants and local times, so a naive datetime cannot happen."
+imports = ["arrow", "pendulum", "pytz"]
+dependencies = ["arrow", "pendulum", "pytz"]
+guard = "semgrep rule `no-naive-now` (`datetime.now()`, `datetime.utcnow()` in `src/`)"
+
+[[ban]]
+need = "Web framework"
+use = "Litestar"
+instead_of = "FastAPI, Django, Flask"
+reason = "Faster, msgspec-native, a real dependency injection system and an active team."
+imports = ["fastapi", "django", "flask", "starlette"]
+dependencies = ["fastapi", "django", "flask"]
+
+[[ban]]
+need = "ASGI server"
+use = "Granian"
+instead_of = "uvicorn, daphne, hypercorn"
+reason = "Rust I/O, and one binary for HTTP/1, HTTP/2 and WebSockets."
+dependencies = ["uvicorn", "daphne", "hypercorn", "gunicorn"]
+
+[[ban]]
+need = "HTTP client"
+use = "aiohttp"
+instead_of = "requests, httpx, urllib3"
+reason = "A mature, fast asyncio client with connection pooling. httpx stays allowed as a dependency of the Litestar test client."
+imports = ["requests", "httpx", "urllib3"]
+dependencies = ["requests", "urllib3"]
+
+[[ban]]
+need = "HTTP mocks in tests"
+use = "aioresponses"
+instead_of = "responses, respx"
+reason = "It mocks aiohttp."
+dependencies = ["responses", "respx"]
+
+[[ban]]
+need = "AWS"
+use = "aioboto3"
+instead_of = "boto3"
+reason = "It does not block the event loop. botocore stays allowed as a dependency of aioboto3."
+imports = ["boto3"]
+dependencies = ["boto3"]
+
+[[ban]]
+need = "AWS mocks in tests"
+use = "moto in server mode"
+instead_of = "hand-written fakes"
+reason = "It speaks the real AWS protocol to aioboto3."
+guard = "Rule only"
+
+[[ban]]
+need = "Retries"
+use = "stamina"
+instead_of = "tenacity, backoff, hand-written loops"
+reason = "Safe defaults, jitter, a test mode and structlog integration."
+imports = ["tenacity", "backoff"]
+dependencies = ["tenacity", "backoff"]
+guard = "semgrep rule `no-sleep-loop` (`while True` with `sleep` in `src/`)"
+
+[[ban]]
+need = "Concurrency"
+use = "anyio task groups"
+instead_of = "bare `asyncio.gather`, `create_task`"
+reason = "Structured concurrency and cancel scopes. Litestar runs on anyio."
+guard = "semgrep rule `structured-concurrency` (`asyncio.gather`, `asyncio.create_task` in `src/`)"
+
+[[ban]]
+need = "Async tests"
+use = "the anyio pytest plugin"
+instead_of = "pytest-asyncio"
+reason = "One event-loop model across the code and the tests."
+dependencies = ["pytest-asyncio", "pytest-trio"]
+
+[[ban]]
+need = "CLI"
+use = "cyclopts"
+instead_of = "click, typer, argparse"
+reason = "Type hints are the interface, with good help text and no decorator for each option."
+imports = ["click", "typer", "argparse"]
+dependencies = ["click", "typer"]
+
+[[ban]]
+need = "Data frames"
+use = "polars"
+instead_of = "pandas"
+reason = "Speed, a lazy API, strict types and no index surprises. If a third-party library needs pandas, convert in one module, `adapters/pandas_interop.py`, with an inline `# ruff: ignore[banned-api]` and its reason."
+imports = ["pandas"]
+dependencies = ["pandas"]
+
+[[ban]]
+need = "SQL over files"
+use = "duckdb"
+instead_of = "pandas SQL, sqlite for analytics"
+reason = "It queries Parquet files and polars frames in place."
+guard = "Rule only"
+
+[[ban]]
+need = "File format for tables"
+use = "Parquet"
+instead_of = "CSV"
+reason = "Types and compression."
+guard = "Rule only"
+
+[[ban]]
+need = "Charts in notebooks"
+use = "altair"
+instead_of = "matplotlib, seaborn"
+reason = "Declarative, and interactive inside marimo (`mo.ui.altair_chart`)."
+guard = "Rule only"
+
+[[ban]]
+need = "Notebooks"
+use = "marimo"
+instead_of = "Jupyter"
+reason = "Plain `.py` files, reactive, with diffs that a reviewer can read and that ruff can lint."
+dependencies = ["jupyter", "notebook", "jupyterlab"]
+files = ["*.ipynb"]
+
+[[ban]]
+need = "String-heavy work"
+use = "stringzilla"
+instead_of = "`str`, `re` loops"
+reason = "SIMD search, split and hashing on large text."
+guard = "Rule only, and only when the project processes large text"
+
+[[ban]]
+need = "Docs"
+use = "Zensical with mkdocstrings"
+instead_of = "Sphinx, MkDocs"
+reason = "Fast builds, a TOML config and a modern theme."
+dependencies = ["sphinx", "mkdocs", "mkdocs-material"]
+files = ["mkdocs.yml", "docs/conf.py"]
+
+[[ban]]
+need = "Task runner"
+use = "just"
+instead_of = "make, invoke, tox, nox"
+reason = "Plain recipes with arguments, and no tab or `.PHONY` traps."
+dependencies = ["invoke", "tox", "nox"]
+files = ["Makefile", "tox.ini", "noxfile.py", "tasks.py"]
+
+[[ban]]
+need = "Changelog"
+use = "scriv fragments"
+instead_of = "a hand-edited `CHANGELOG.md`, towncrier"
+reason = "No merge conflicts, and the release workflow collects the fragments."
+dependencies = ["towncrier"]
+guard = "The check-changelog hook and the fragment workflow"
+
+[[ban]]
+need = "Project template"
+use = "Copier"
+instead_of = "cookiecutter"
+reason = "`copier update` brings the template changes into each project."
+dependencies = ["cookiecutter", "cruft"]
+
+[[ban]]
+need = "Mutation testing"
+use = "cosmic-ray"
+instead_of = "mutmut"
+reason = "Parallel shards over a session database, and a filter for equivalent mutants."
+dependencies = ["mutmut"]

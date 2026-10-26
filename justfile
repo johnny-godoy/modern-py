@@ -16,3 +16,7 @@ render-all dir="/tmp/modern-py-render":
 # Run copier update from the previous tag to the working tree on a rendered project.
 update-check dir="/tmp/modern-py-update":
     scripts/update_check.sh {{dir}}
+
+# Write the tables that template/scripts/banned.toml generates into the template files.
+sync-tables:
+    python3 scripts/sync_tables.py

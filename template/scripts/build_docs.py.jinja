@@ -20,7 +20,7 @@ Zensical prints a ``griffe:`` warning for a docstring that does not render, for 
 does not have, and still exits with code 0. The ``build`` command fails when the output has such a warning.
 """
 
-import argparse
+import argparse  # ruff: ignore[banned-api] -- the scripts run with the dev group only, which has no command-line library
 import subprocess  # ruff: ignore[suspicious-subprocess-import] -- marimo and Zensical only offer their build as a command
 import sys
 from collections.abc import Callable, Sequence

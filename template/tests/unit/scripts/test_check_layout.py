@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 from scripts import check_layout
+from scripts.sync_banned import Ban
 
 TOP = {"__init__.py"}
 
@@ -121,6 +122,41 @@ def test_main(tmp_path: Path, files: list[str], code: int, capsys: pytest.Captur
     )
     assert check_layout.main([str(tmp_path)]) == code
     assert bool(capsys.readouterr().err) == bool(code)
+
+
+def test_main_reports_a_banned_file(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+    build(tmp_path, [*GOOD, "Makefile"])
+    (tmp_path / "pyproject.toml").write_text(
+        '[tool.importlinter]\nroot_package = "pkg"\n'
+        '[[tool.importlinter.contracts]]\ntype = "layers"\nlayers = ["pkg.core"]\n',
+        encoding="utf-8",
+    )
+    assert check_layout.main([str(tmp_path)]) == 1
+    assert "Makefile: a banned file" in capsys.readouterr().err
+
+
+BANS = [
+    Ban(need="Task runner", use="just", instead_of="make", reason="Plain recipes.", files=("Makefile",)),
+    Ban(need="Notebooks", use="marimo", instead_of="Jupyter", reason="Plain files.", files=("*.ipynb",)),
+    Ban(need="Docs", use="Zensical", instead_of="Sphinx", reason="Fast builds.", files=("docs/conf.py",)),
+]
+
+
+@pytest.mark.parametrize("path", ["Makefile", "sub/Makefile", "notebooks/analysis.ipynb", "docs/conf.py"])
+def test_a_banned_file_fails_with_its_replacement(path: str) -> None:
+    [problem] = check_layout.banned_file_problems([Path(path)], BANS)
+    assert problem.startswith(f"{path}: a banned file")
+    assert "Use " in problem
+
+
+@pytest.mark.parametrize("path", ["justfile", "notebooks/analysis.py", "other/docs/conf.py", "conf.py"])
+def test_an_allowed_file_passes(path: str) -> None:
+    assert check_layout.banned_file_problems([Path(path)], BANS) == []
+
+
+def test_project_files_skip_the_directories_of_tools(tmp_path: Path) -> None:
+    build(tmp_path, ["src/pkg/a.py", ".venv/lib/Makefile", "site/index.html", "node_modules/x/Makefile"])
+    assert check_layout.project_files(tmp_path) == [Path("src/pkg/a.py")]
 
 
 def test_main_checks_this_repository() -> None:

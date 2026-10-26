@@ -10,7 +10,7 @@ modules that changed since ``REF`` are mutated. With ``--module``, only the give
 if any mutant survives.
 """
 
-import argparse
+import argparse  # ruff: ignore[banned-api] -- the scripts run with the dev group only, which has no command-line library
 import os
 import shutil
 import sqlite3

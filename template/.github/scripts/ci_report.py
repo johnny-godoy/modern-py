@@ -21,7 +21,7 @@ Four subcommands, all stdlib only:
     access (a fork PR) they do nothing.
 """
 
-import json
+import json  # ruff: ignore[banned-api] -- runs under the bare python3 of the runner, with no project environment
 import os
 import re
 import sys

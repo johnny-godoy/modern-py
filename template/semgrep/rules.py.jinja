@@ -111,3 +111,58 @@ def returns_list(x) -> list[float]:
 # ok: {{ rule_prefix }}-return-attrs-not-container
 def returns_suppressed(x) -> dict[str, float]:  # nosemgrep: {{ rule_prefix }}-return-attrs-not-container -- test of the opt-out
     return {"a": x}
+
+
+def now():
+    # ruleid: {{ rule_prefix }}-no-naive-now
+    naive = datetime.now()
+    # ruleid: {{ rule_prefix }}-no-naive-now
+    utc = datetime.datetime.utcnow()
+    # ok: {{ rule_prefix }}-no-naive-now
+    instant = whenever.Instant.now()
+    return naive, utc, instant
+
+
+def poll(client):
+    # ruleid: {{ rule_prefix }}-no-sleep-loop
+    while True:
+        if client.ready():
+            return
+        time.sleep(1)
+
+
+async def poll_async(client):
+    # ruleid: {{ rule_prefix }}-no-sleep-loop
+    while True:
+        if await client.ready():
+            return
+        await anyio.sleep(1)
+
+
+def consume(queue):
+    # ok: {{ rule_prefix }}-no-sleep-loop
+    while True:
+        item = queue.get()
+        if item is None:
+            return
+        handle(item)
+
+
+async def fan_out(a, b):
+    # ruleid: {{ rule_prefix }}-structured-concurrency
+    await asyncio.gather(a(), b())
+    # ruleid: {{ rule_prefix }}-structured-concurrency
+    asyncio.create_task(a())
+    # ok: {{ rule_prefix }}-structured-concurrency
+    async with anyio.create_task_group() as group:
+        group.start_soon(a)
+
+
+def load_model(path, types):
+    # ruleid: {{ rule_prefix }}-skops-load-trusted-true
+    first = skops.io.load(path, trusted=True)
+    # ruleid: {{ rule_prefix }}-skops-load-trusted-true
+    second = sio.load(path, trusted=True)
+    # ok: {{ rule_prefix }}-skops-load-trusted-true
+    third = sio.load(path, trusted=types)
+    return first, second, third

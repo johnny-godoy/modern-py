@@ -12,7 +12,7 @@ Run it as a ``commit-msg`` hook (``--message-file``), or on the commits of a bra
 commits that git writes for ``fixup!`` and ``squash!`` are skipped.
 """
 
-import argparse
+import argparse  # ruff: ignore[banned-api] -- the scripts run with the dev group only, which has no command-line library
 import re
 import shutil
 import subprocess  # ruff: ignore[suspicious-subprocess-import] -- git offers the commits of a branch only as a command
