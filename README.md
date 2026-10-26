@@ -39,4 +39,9 @@ Each project is a library. A profile adds a kind of application, and you can cho
 | `proofs` | Lean proofs and Typst papers. |
 | `publish` | PyPI trusted publishing in the release workflow. |
 
-The [documentation](docs/index.md) has the full list of tools and library choices.
+## Documentation
+
+- [Overview](docs/index.md): what a project gets, and the layers of the package.
+- [Start a project](docs/start.md): the questions, the profiles, the features and the first steps.
+- [Update a project](docs/update.md): take the template changes, and resolve a conflict.
+- [Library choices](docs/libraries.md): the library for each need, the reason and the guard.

@@ -22,7 +22,13 @@ testing, conventional commits, scriv changelog fragments and a release workflow.
 just render library /tmp/out        # render tests/answers/library.yml into /tmp/out and run just check, test, docs
 just render-all                      # every answer file, as the CI matrix does
 just update-check                    # copier update from the previous tag on a rendered project
+just sync-tables                     # write the tables of template/scripts/banned.toml into the template and docs/
+just check-tables                    # fail when one of those tables is out of date
 ```
+
+`scripts/render.sh <name> <dir> --no-checks` renders without the checks, which is fast for a look at the output. Each
+check of a rendered project takes one to two minutes, so render one answer set while you work, and all of them before
+you commit.
 </commands>
 
 <conventions>
@@ -35,5 +41,10 @@ just update-check                    # copier update from the previous tag on a 
 - Put a profile file under a path part that renders empty when the profile is off, for example
   `{% if 'service' in profiles %}api{% endif %}`. The reason: vulture, coverage and mutation testing fail on code that
   a project does not use, so no answer may add unused code.
-- Change the answer files when you add a question, so that the CI matrix covers each answer.
+- Change the answer files when you add a question, so that the CI matrix covers each answer. The matrix is the list
+  of files in `tests/answers/`.
+- Make a rendered file pass the formatters as it comes out of Copier: `just check` must pass on the first run. Put
+  each Jinja block tag on its own line, and split a call whose length depends on an answer over several lines.
+- After a fix in a rendered project, copy the fix back to the template file. A file without `.jinja` is copied as it
+  is, so you can copy it back whole.
 </conventions>

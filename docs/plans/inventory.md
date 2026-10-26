@@ -122,20 +122,29 @@ template keeps the purpose of the file and changes its content. "Dropped" means 
 | `notebooks/` | Generalized | One example marimo notebook with `data`. |
 | `proofs/` | Generalized, opt-in | With `proofs`: the Lake project, the shared Typst style and one small example topic. The `LocalExplanations` topic is domain. |
 
-## Open questions
+## Decisions
 
-These are the points where I cannot tell process from domain. Each one has my proposed answer.
+The owner answered the open questions of the first version of this inventory. The template follows these answers.
 
-1. **`uv.lock` in the template.** A committed lock in the template goes stale, and its hash fails `uv lock --check`
-   after a change of the answers. Proposal: do not ship it. The Copier task `uv sync` writes it, and the project
-   commits it. The CI of the template checks that a fresh lock passes every gate.
-2. **`NOTICE` and `CITATION.cff`.** `NOTICE` is about TalkToEBM. A citation file is useful for a research library and
-   noise for a service. Proposal: drop `NOTICE`, and ship `CITATION.cff` only for the `library` profile with the
-   author from the answers.
-3. **The `ci_report.py` PR comment and the `progress` job.** They are process, but 700 lines of code that every project
-   must keep at 100% coverage. Proposal: keep them, because they make CI failures readable for an agent.
-4. **`ROADMAP.md` and milestone versions.** `release.py` takes a version from `pyproject.toml` when a milestone PR sets
-   it. A project with no roadmap can still use this. Proposal: keep `ROADMAP.md` with one row.
-5. **The ruleset bypass actor and `required_approving_review_count: 0`.** EBaMl has one maintainer. Proposal: keep
-   both as defaults, and make the review count a Copier question.
-6. **`semgrep p/default` in CI and trufflehog and trivy.** They are process. Proposal: keep them as they are.
+| Question | Decision |
+| --- | --- |
+| Repository | `johnny-godoy/modern-py`. |
+| License | MIT by default, with Apache-2.0 and Proprietary as choices. |
+| Python | 3.14, the newest CPython that every dependency supports. onnxruntime and stringzilla have no 3.15 wheels. |
+| Mutation gate | On for every profile. A service mutates `core` and `domain` only, because its I/O layers are slow to mutate. |
+| PyPI | On by default for a library only. |
+| Database | PostgreSQL in production, SQLite in the unit tests. |
+| `uv.lock` | The template ships none. The `uv lock` task writes it after a copy. |
+| `NOTICE`, `CITATION.cff` | No `NOTICE`. `CITATION.cff` for a library only. |
+| CI report | `ci_report.py` and the report comment stay. |
+| `ROADMAP.md` | Kept, with one first milestone. |
+| Ruleset | The admin bypass stays. The number of approvals is a question, 0 by default. |
+| Security scans | `semgrep p/default`, trufflehog and trivy stay as they are. |
+
+## Changes found while the template was built
+
+- aioresponses 0.7.9 fails with aiohttp 3.14, so the HTTP adapter tests use the aiohttp test server.
+- The beartype hook skips the `api` package, because a Litestar route decorator returns a handler object.
+- ruff's typing-only import rules are off, because beartype reads every annotation at run time.
+- The proofs feature needs no Mathlib: the example topic uses core Lean, and the axiom check accepts any subset of
+  `propext`, `Classical.choice` and `Quot.sound`.
