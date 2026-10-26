@@ -1,3 +1,4 @@
+{% raw %}
 name: CI
 
 on:
@@ -23,7 +24,7 @@ env:
 # Fail-fast order: cheap static gates first, in parallel; slower dynamic gates only run once those pass.
 #   changes: decides which gates a pull request needs (dorny/paths-filter); a push to main runs every gate
 #   stage 1: prek, trufflehog, semgrep, trivy
-#   stage 2: pytest (need prek only, so they start while the scanners still run)
+#   stage 2: pytest{% endraw %}{{ " and db" if "db" in features }}{% raw %} (need prek only, so they start while the scanners still run)
 #   stage 3: mutation (needs every gate above; slowest). Only modules changed against the base run; mutation-weekly.yml
 #            runs all.
 #
@@ -199,9 +200,44 @@ jobs:
         with:
           gate: pytest
 
+{% endraw %}
+{% if 'db' in features %}
+{% raw %}
+  db:
+    name: db (PostgreSQL)
+    needs: [changes, prek]
+    if: needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # The service lives only for the job and listens on localhost, so it needs no password.
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://postgres@localhost:5432/postgres
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Run the migrations, then the database tests
+        run: |
+          mkdir -p "$CI_LOGS"
+          { just migrate && just test-db; } 2>&1 | tee "$CI_LOGS/db.log"
+      - uses: ./.github/actions/failure-report
+        if: failure()
+        with:
+          gate: db
+
+{% endraw %}
+{% endif %}
+{% raw %}
   mutation:
     name: mutation (changed modules, 100% score)
-    needs: [changes, prek, trufflehog, semgrep, trivy, pytest]
+    needs: [changes, prek, trufflehog, semgrep, trivy, pytest{% endraw %}{{ ", db" if "db" in features }}{% raw %}]
     # A skipped gate does not block this job, so a failed or cancelled gate must be named. Without `!cancelled()` the
     # default `success()` would skip the job whenever any gate is skipped.
     if: ${{ !cancelled() && !contains(needs.*.result, 'failure') && needs.changes.outputs.src == 'true' }}
@@ -262,7 +298,7 @@ jobs:
   report:
     name: report
     if: always()
-    needs: [changes, prek, trufflehog, semgrep, trivy, pytest, mutation, progress] # progress ends first, so it cannot overwrite the report
+    needs: [changes, prek, trufflehog, semgrep, trivy, pytest{% endraw %}{{ ", db" if "db" in features }}{% raw %}, mutation, progress] # progress ends first, so it cannot overwrite the report
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -288,3 +324,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: python3 .github/scripts/ci_report.py post /tmp/ci-report/comment.md
+{% endraw %}

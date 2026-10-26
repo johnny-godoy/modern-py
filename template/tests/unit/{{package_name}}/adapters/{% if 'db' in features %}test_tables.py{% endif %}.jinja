@@ -1,0 +1,8 @@
+"""Tests for the tables."""
+
+from {{ package_name }}.adapters.tables import SummaryRow
+
+
+def test_summary_row_has_a_unique_name() -> None:
+    assert SummaryRow._meta.tablename == "summary"
+    assert SummaryRow.name._meta.unique

@@ -51,3 +51,13 @@ changelog:
 serve port="8000":
     uv run --frozen granian --interface asgi --factory --port {% raw %}{{port}}{% endraw %} {{ package_name }}.api.app:create_app
 {% endif %}
+{% if 'db' in features %}
+
+# Run the database migrations on the database of DATABASE_URL.
+migrate:
+    uv run --frozen piccolo migrations forwards all
+
+# Run the database tests on the database of DATABASE_URL, which CI sets to a PostgreSQL service.
+test-db:
+    PICCOLO_CONF=piccolo_conf uv run --frozen pytest --no-cov tests/unit/{{ package_name }}/adapters/test_summary_store.py
+{% endif %}

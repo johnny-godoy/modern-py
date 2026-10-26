@@ -1,0 +1,15 @@
+"""The Piccolo configuration of the unit tests: a SQLite file, so the tests need no database server.
+
+``tests/unit/conftest.py`` selects it with ``PICCOLO_CONF``. A CI job runs the same tests on PostgreSQL with
+``piccolo_conf.py``. The file name holds the process id, so the parallel shards of the mutation run do not share a file.
+"""
+
+import os
+import tempfile
+from pathlib import Path
+
+from piccolo.conf.apps import AppRegistry
+from piccolo.engine.sqlite import SQLiteEngine
+
+DB = SQLiteEngine(path=str(Path(tempfile.gettempdir()) / f"{{ package_name }}-test-{os.getpid()}.sqlite"))
+APP_REGISTRY = AppRegistry(apps=["{{ package_name }}.adapters.piccolo_app"])

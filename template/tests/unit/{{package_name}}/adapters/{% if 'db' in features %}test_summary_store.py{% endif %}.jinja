@@ -1,0 +1,53 @@
+"""Tests for the database adapter. They run on SQLite here and on PostgreSQL in CI (``just test-db``)."""
+
+from collections.abc import AsyncIterator
+
+import pytest
+from piccolo.table import create_db_tables
+
+from {{ package_name }}.adapters.summary_store import load_summary, save_summary
+from {{ package_name }}.adapters.tables import SummaryRow
+from {{ package_name }}.domain.summary import Summary
+
+pytestmark = [pytest.mark.anyio, pytest.mark.usefixtures("tables")]
+FIRST: Summary = Summary(count=2, minimum=1.0, maximum=3.0, mean=2.0)
+SECOND: Summary = Summary(count=1, minimum=5.0, maximum=5.0, mean=5.0)
+
+
+@pytest.fixture
+async def tables() -> AsyncIterator[None]:
+    """Create the tables if they do not exist, and delete the rows after the test.
+
+    Yields
+    ------
+    None
+        Control to the test.
+
+    """
+    await create_db_tables(SummaryRow, if_not_exists=True)
+    yield
+    await SummaryRow.delete(force=True)
+
+
+async def test_load_summary_returns_what_save_summary_saved() -> None:
+    await save_summary("first", FIRST)
+    assert await load_summary("first") == FIRST
+
+
+async def test_save_summary_replaces_the_summary_of_the_name() -> None:
+    await save_summary("first", FIRST)
+    await save_summary("first", SECOND)
+    assert await load_summary("first") == SECOND
+    assert await SummaryRow.count() == 1
+
+
+async def test_load_summary_of_an_unknown_name_returns_none() -> None:
+    await save_summary("first", FIRST)
+    assert await load_summary("other") is None
+
+
+async def test_a_mean_keeps_every_digit() -> None:
+    # a 4-byte REAL column would return 0.10000000149011612
+    exact = Summary(count=3, minimum=0.1, maximum=0.1, mean=0.1)
+    await save_summary("exact", exact)
+    assert await load_summary("exact") == exact

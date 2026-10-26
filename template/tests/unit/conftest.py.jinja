@@ -9,6 +9,10 @@ from hypothesis import settings
 # examples every time and keep no example database. A timing limit fails at random on a slow runner, so it is off.
 settings.register_profile("ci", derandomize=True, database=None, deadline=None)
 settings.load_profile("ci" if os.environ.get("CI") or os.environ.get("MUTATION_FIRST") else "default")
+{% if 'db' in features %}
+# The unit tests run Piccolo on SQLite. `just test-db` sets PICCOLO_CONF to piccolo_conf, for PostgreSQL.
+os.environ.setdefault("PICCOLO_CONF", "piccolo_conf_test")
+{% endif %}
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:

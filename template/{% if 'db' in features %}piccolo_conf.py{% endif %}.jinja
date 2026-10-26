@@ -1,0 +1,12 @@
+"""The Piccolo configuration of production: PostgreSQL at the URL in ``DATABASE_URL``.
+
+The unit tests use ``piccolo_conf_test.py`` instead (``PICCOLO_CONF``), so they need no database server.
+"""
+
+import os
+
+from piccolo.conf.apps import AppRegistry
+from piccolo.engine.postgres import PostgresEngine
+
+DB = PostgresEngine(config={"dsn": os.environ["DATABASE_URL"]})
+APP_REGISTRY = AppRegistry(apps=["{{ package_name }}.adapters.piccolo_app"])

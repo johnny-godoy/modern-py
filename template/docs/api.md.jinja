@@ -21,6 +21,12 @@
 
 ::: {{ package_name }}.adapters.parquet_query
 {% endif %}
+{% if 'db' in features %}
+
+## Summary store
+
+::: {{ package_name }}.adapters.summary_store
+{% endif %}
 {% if 'service' in profiles %}
 
 ## HTTP client

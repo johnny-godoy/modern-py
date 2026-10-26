@@ -1,0 +1,47 @@
+"""Save and load summaries in the database: an example of an adapter that converts rows to domain types."""
+
+from {{ package_name }}.adapters.tables import SummaryRow
+from {{ package_name }}.domain.summary import Summary
+
+
+async def save_summary(name: str, summary: Summary) -> None:
+    """Save a summary under a name, and replace the summary that has the name.
+
+    Parameters
+    ----------
+    name: str
+        The name of the summary.
+    summary: Summary
+        The summary.
+
+    """
+    await SummaryRow.delete().where(SummaryRow.name == name)
+    await SummaryRow.insert(
+        SummaryRow(
+            name=name,
+            value_count=summary.count,
+            minimum=summary.minimum,
+            maximum=summary.maximum,
+            mean=summary.mean,
+        ),
+    )
+
+
+async def load_summary(name: str) -> Summary | None:
+    """Load the summary of a name.
+
+    Parameters
+    ----------
+    name: str
+        The name of the summary.
+
+    Returns
+    -------
+    Summary | None
+        The summary, or ``None`` if no summary has the name.
+
+    """
+    row = await SummaryRow.objects().get(SummaryRow.name == name)
+    if row is None:
+        return None
+    return Summary(count=row.value_count, minimum=row.minimum, maximum=row.maximum, mean=row.mean)

@@ -1,0 +1,9 @@
+"""Tests for the Piccolo app."""
+
+from {{ package_name }}.adapters.piccolo_app import APP_CONFIG, MIGRATIONS
+from {{ package_name }}.adapters.tables import SummaryRow
+
+
+def test_the_app_registers_every_table_and_the_migrations_folder() -> None:
+    assert APP_CONFIG.table_classes == [SummaryRow]
+    assert (MIGRATIONS / "__init__.py").is_file()

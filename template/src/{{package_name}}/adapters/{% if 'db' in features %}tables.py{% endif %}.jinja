@@ -1,0 +1,14 @@
+"""The database tables of ``{{ package_name }}``."""
+
+from piccolo.columns import DoublePrecision, Integer, Varchar
+from piccolo.table import Table
+
+
+class SummaryRow(Table, tablename="summary"):
+    """A summary with a unique name, as one row."""
+
+    name = Varchar(length=100, unique=True)
+    value_count = Integer()
+    minimum = DoublePrecision()
+    maximum = DoublePrecision()
+    mean = DoublePrecision()

@@ -101,7 +101,8 @@ build-backend = "uv_build"
 
 [tool.ruff]
 # reason: semgrep/rules.py holds bad code on purpose, as test data for the semgrep rules, and a fix by ruff would break
-# the annotations that semgrep reads.
+# the annotations that semgrep reads.{% if 'db' in features %} Piccolo writes the files of migrations/, so they are generated code.{% endif %}
+
 force-exclude = true
 exclude = [
     "semgrep",
@@ -110,6 +111,9 @@ exclude = [
     "build",
     "dist",
     "site",
+{% if 'db' in features %}
+    "migrations",
+{% endif %}
 ]
 fix = true
 preview = true

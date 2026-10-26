@@ -54,6 +54,9 @@ GATES = [
     ("semgrep", "semgrep (base rules)"),
     ("trivy", "trivy (vulnerabilities, secrets, misconfig)"),
     ("pytest", "pytest + 100% coverage"),
+{% if 'db' in features %}
+    ("db", "migrations and database tests on PostgreSQL"),
+{% endif %}
     ("mutation", "mutation score 100%"),
 ]
 
@@ -345,6 +348,25 @@ def pytest() -> str:
     return "\n\n".join(parts)
 
 
+{% if 'db' in features %}
+def db() -> str:
+    """Report the failed migrations or database tests.
+
+    Returns
+    -------
+    str
+        The markdown with the failure and how to fix it.
+
+    """
+    log = read(LOGS / "db.log")
+    return (
+        f"**Migrations or database tests failed on PostgreSQL**\n{block(log[-MAX_LOG_TAIL:])}\n"
+        "**Fix:** start PostgreSQL, set `DATABASE_URL`, then run `just migrate` and `just test-db`. A test that "
+        "passes on SQLite and fails here uses a feature that the two engines treat differently."
+    )
+
+
+{% endif %}
 def mutation() -> str:
     """Report the mutants that survived.
 
@@ -375,7 +397,7 @@ def mutation() -> str:
     )
 
 
-BUILDERS = {fn.__name__: fn for fn in (prek, trufflehog, semgrep, trivy, pytest, mutation)}
+BUILDERS = {fn.__name__: fn for fn in (prek, trufflehog, semgrep, trivy, pytest{{ ", db" if "db" in features }}, mutation)}
 
 
 def snippet(gate: str) -> None:

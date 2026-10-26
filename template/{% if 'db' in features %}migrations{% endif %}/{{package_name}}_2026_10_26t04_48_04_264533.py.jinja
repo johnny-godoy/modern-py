@@ -1,0 +1,127 @@
+from piccolo.apps.migrations.auto.migration_manager import MigrationManager
+from piccolo.columns.column_types import DoublePrecision
+from piccolo.columns.column_types import Integer
+from piccolo.columns.column_types import Varchar
+from piccolo.columns.indexes import IndexMethod
+
+ID = "2026-10-26T04:48:04:264533"
+VERSION = "1.36.0"
+DESCRIPTION = ""
+
+
+async def forwards():
+    manager = MigrationManager(
+        migration_id=ID, app_name="{{ package_name }}", description=DESCRIPTION
+    )
+
+    manager.add_table(
+        class_name="SummaryRow", tablename="summary", schema=None, columns=None
+    )
+
+    manager.add_column(
+        table_class_name="SummaryRow",
+        tablename="summary",
+        column_name="value_count",
+        db_column_name="value_count",
+        column_class_name="Integer",
+        column_class=Integer,
+        params={
+            "default": 0,
+            "null": False,
+            "primary_key": False,
+            "unique": False,
+            "index": False,
+            "index_method": IndexMethod.btree,
+            "choices": None,
+            "db_column_name": None,
+            "secret": False,
+        },
+        schema=None,
+    )
+
+    manager.add_column(
+        table_class_name="SummaryRow",
+        tablename="summary",
+        column_name="name",
+        db_column_name="name",
+        column_class_name="Varchar",
+        column_class=Varchar,
+        params={
+            "length": 100,
+            "default": "",
+            "null": False,
+            "primary_key": False,
+            "unique": True,
+            "index": False,
+            "index_method": IndexMethod.btree,
+            "choices": None,
+            "db_column_name": None,
+            "secret": False,
+        },
+        schema=None,
+    )
+
+    manager.add_column(
+        table_class_name="SummaryRow",
+        tablename="summary",
+        column_name="minimum",
+        db_column_name="minimum",
+        column_class_name="DoublePrecision",
+        column_class=DoublePrecision,
+        params={
+            "default": 0.0,
+            "null": False,
+            "primary_key": False,
+            "unique": False,
+            "index": False,
+            "index_method": IndexMethod.btree,
+            "choices": None,
+            "db_column_name": None,
+            "secret": False,
+        },
+        schema=None,
+    )
+
+    manager.add_column(
+        table_class_name="SummaryRow",
+        tablename="summary",
+        column_name="maximum",
+        db_column_name="maximum",
+        column_class_name="DoublePrecision",
+        column_class=DoublePrecision,
+        params={
+            "default": 0.0,
+            "null": False,
+            "primary_key": False,
+            "unique": False,
+            "index": False,
+            "index_method": IndexMethod.btree,
+            "choices": None,
+            "db_column_name": None,
+            "secret": False,
+        },
+        schema=None,
+    )
+
+    manager.add_column(
+        table_class_name="SummaryRow",
+        tablename="summary",
+        column_name="mean",
+        db_column_name="mean",
+        column_class_name="DoublePrecision",
+        column_class=DoublePrecision,
+        params={
+            "default": 0.0,
+            "null": False,
+            "primary_key": False,
+            "unique": False,
+            "index": False,
+            "index_method": IndexMethod.btree,
+            "choices": None,
+            "db_column_name": None,
+            "secret": False,
+        },
+        schema=None,
+    )
+
+    return manager

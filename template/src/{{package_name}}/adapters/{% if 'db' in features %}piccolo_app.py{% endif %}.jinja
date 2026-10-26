@@ -1,0 +1,17 @@
+"""The Piccolo app of ``{{ package_name }}``: its tables and the folder of its migrations."""
+
+from pathlib import Path
+
+from piccolo.conf.apps import AppConfig
+
+from {{ package_name }}.adapters.tables import SummaryRow
+
+# The migrations live at the root of the repository, outside the package: they are generated code, and the layout
+# check and the coverage gate cover the package only.
+MIGRATIONS = Path(__file__).resolve().parents[3] / "migrations"
+
+APP_CONFIG: AppConfig = AppConfig(
+    app_name="{{ package_name }}",
+    migrations_folder_path=MIGRATIONS,
+    table_classes=[SummaryRow],
+)
