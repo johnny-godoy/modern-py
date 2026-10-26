@@ -1,0 +1,56 @@
+"""Read and write objects in an S3 bucket: an example of an adapter that calls AWS without a block of the event loop."""
+
+import aioboto3
+import attrs
+
+
+@attrs.frozen
+class ObjectStore:
+    """The objects of one S3 bucket.
+
+    Attributes
+    ----------
+    session: aioboto3.Session
+        The AWS session, which holds the credentials and the region.
+    bucket: str
+        The name of the bucket.
+    endpoint_url: str | None
+        The URL of an S3-compatible service, for example moto in the tests. ``None`` uses AWS.
+
+    """
+
+    session: aioboto3.Session
+    bucket: str
+    endpoint_url: str | None = None
+
+    async def put(self, key: str, body: bytes) -> None:
+        """Write an object, and replace the object of the key.
+
+        Parameters
+        ----------
+        key: str
+            The key of the object.
+        body: bytes
+            The content of the object.
+
+        """
+        async with self.session.client("s3", endpoint_url=self.endpoint_url) as s3:
+            await s3.put_object(Bucket=self.bucket, Key=key, Body=body)
+
+    async def get(self, key: str) -> bytes:
+        """Read an object.
+
+        Parameters
+        ----------
+        key: str
+            The key of the object.
+
+        Returns
+        -------
+        bytes
+            The content of the object.
+
+        """
+        async with self.session.client("s3", endpoint_url=self.endpoint_url) as s3:
+            response = await s3.get_object(Bucket=self.bucket, Key=key)
+            return await response["Body"].read()

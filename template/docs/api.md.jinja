@@ -27,6 +27,12 @@
 
 ::: {{ package_name }}.adapters.model_store
 {% endif %}
+{% if 'aws' in features %}
+
+## Object store
+
+::: {{ package_name }}.adapters.object_store
+{% endif %}
 {% if 'db' in features %}
 
 ## Summary store

@@ -1,0 +1,84 @@
+"""Tests for the S3 adapter, against moto in server mode, which speaks the real S3 protocol."""
+
+import socket
+from collections.abc import Iterator
+
+import aioboto3
+import pytest
+from botocore.exceptions import ClientError
+from moto.server import ThreadedMotoServer
+
+from {{ package_name }}.adapters.object_store import ObjectStore
+
+pytestmark = pytest.mark.anyio
+BUCKET = "test-bucket"
+
+
+def free_port() -> int:
+    """Find a port that no server listens on.
+
+    Returns
+    -------
+    int
+        The port.
+
+    """
+    with socket.socket() as probe:
+        probe.bind(("127.0.0.1", 0))
+        port: int = probe.getsockname()[1]
+        return port
+
+
+@pytest.fixture
+def endpoint(monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
+    """Start moto on a free port, with fake credentials, so no test reaches AWS.
+
+    Yields
+    ------
+    str
+        The URL of the server.
+
+    """
+    for name, value in {
+        "AWS_ACCESS_KEY_ID": "testing",
+        "AWS_SECRET_ACCESS_KEY": "testing",
+        "AWS_DEFAULT_REGION": "us-east-1",
+    }.items():
+        monkeypatch.setenv(name, value)
+    port = free_port()
+    server = ThreadedMotoServer(ip_address="127.0.0.1", port=port, verbose=False)
+    server.start()
+    yield f"http://127.0.0.1:{port}"
+    server.stop()
+
+
+@pytest.fixture
+async def store(endpoint: str) -> ObjectStore:
+    """Create the bucket of the tests.
+
+    Returns
+    -------
+    ObjectStore
+        The store of the bucket.
+
+    """
+    session = aioboto3.Session()
+    async with session.client("s3", endpoint_url=endpoint) as s3:
+        await s3.create_bucket(Bucket=BUCKET)
+    return ObjectStore(session=session, bucket=BUCKET, endpoint_url=endpoint)
+
+
+async def test_get_returns_what_put_wrote(store: ObjectStore) -> None:
+    await store.put("a/b.txt", b"content")
+    assert await store.get("a/b.txt") == b"content"
+
+
+async def test_put_replaces_the_object_of_the_key(store: ObjectStore) -> None:
+    await store.put("key", b"first")
+    await store.put("key", b"second")
+    assert await store.get("key") == b"second"
+
+
+async def test_get_of_a_missing_key_raises_the_error_of_s3(store: ObjectStore) -> None:
+    with pytest.raises(ClientError, match="NoSuchKey"):
+        await store.get("missing")
