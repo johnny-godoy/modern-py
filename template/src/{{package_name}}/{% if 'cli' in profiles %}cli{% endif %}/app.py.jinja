@@ -1,0 +1,37 @@
+"""The commands of ``{{ distribution_name }}``."""
+
+import sys
+from collections.abc import Sequence
+
+import cyclopts
+
+from {{ package_name }}.domain.summary import summarize
+
+# return_value lets a test call the app and read the result, without a SystemExit after each command.
+app: cyclopts.App = cyclopts.App(name="{{ distribution_name }}", help="{{ description }}", result_action="return_value")
+
+
+@app.command
+def summary(*values: float) -> None:
+    """Write the count, the smallest value, the largest value and the mean of numbers.
+
+    Parameters
+    ----------
+    *values: float
+        The numbers.
+
+    """
+    result = summarize(values)
+    sys.stdout.write(f"count={result.count} minimum={result.minimum} maximum={result.maximum} mean={result.mean}\n")
+
+
+def main(argv: Sequence[str] | None = None) -> None:
+    """Run the command line.
+
+    Parameters
+    ----------
+    argv: Sequence[str] | None
+        The arguments, without the program name. ``None`` reads ``sys.argv``.
+
+    """
+    app(argv)
