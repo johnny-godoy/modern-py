@@ -39,3 +39,16 @@ environment and the git hooks. `just` lists every recipe.
 
 `CONTRIBUTING.md` has the rules for changes, commits and pull requests.
 <!-- --8<-- [end:development] -->
+{% if 'publish' in features %}
+
+## Release
+
+<!-- --8<-- [start:release] -->
+After each merge to `main`, the release workflow gives the changelog fragments a version, tags it and creates the
+GitHub release. It also uploads the package to PyPI with trusted publishing. Do these steps once:
+
+1. On PyPI, add a trusted publisher for `{{ github_owner }}/{{ repo_name }}`, the workflow `release.yml` and the
+   environment `pypi`.
+2. On GitHub, create the environment `pypi`, and set the repository variable `PUBLISH_TO_PYPI` to `true`.
+<!-- --8<-- [end:release] -->
+{% endif %}
