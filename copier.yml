@@ -5,6 +5,11 @@ _min_copier_version: "9.4"
 _subdirectory: template
 _templates_suffix: .jinja
 _answers_file: .copier-answers.yml
+# A block tag on its own line leaves no blank line, so the rendered files pass the formatters at once.
+_envops:
+  trim_blocks: true
+  lstrip_blocks: true
+  keep_trailing_newline: true
 
 # Files that Copier copies only on the first copy. The project owns them after that, so `copier update` leaves them
 # alone. The version and the changelog change with each release, and the example code is the start of the project.
@@ -19,12 +24,15 @@ _message_after_copy: |
   2. Apply the ruleset: see .github/rulesets/README.md.
   3. Run `just` to see the recipes.
 
+# The tasks run in the new project. `prek run --all-files` reads only the files that git knows, so the first copy
+# stages every file: the first `just check` then checks the whole project.
 _tasks:
-  - command: git init --quiet --initial-branch=main
-    when: "{{ not _copier_conf.dst_path.joinpath('.git').exists() }}"
+  - command: git rev-parse --git-dir > /dev/null 2>&1 || git init --quiet --initial-branch=main
   - command: uv lock --quiet
   - command: uv sync --quiet
   - command: uv run --frozen prek install
+  - command: git add --all
+    when: "{{ _copier_operation == 'copy' }}"
 
 project_name:
   type: str
@@ -74,6 +82,12 @@ license:
     - Proprietary
   default: MIT
 
+copyright_year:
+  type: str
+  help: The year of the copyright notice
+  default: "{{ '%Y' | strftime }}"
+  when: "{{ license != 'Proprietary' }}"
+
 python_version:
   type: str
   help: The minimum Python version. 3.14 is the newest that every dependency of the template supports.
@@ -110,3 +124,14 @@ required_approvals:
   help: The number of approving reviews that a pull request needs before it merges
   default: 0
   validator: "{% if required_approvals < 0 %}The number must be 0 or more.{% endif %}"
+
+# Computed values: Copier asks no question for them and does not store them in the answers file.
+error_class:
+  type: str
+  when: false
+  default: "{{ package_name.split('_') | map('capitalize') | join('') }}Error"
+
+rule_prefix:
+  type: str
+  when: false
+  default: "{{ package_name | replace('_', '-') }}"
