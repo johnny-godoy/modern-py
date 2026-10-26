@@ -15,7 +15,7 @@ Every project is a library at its base. The base holds the process:
 | Area | Tools |
 | --- | --- |
 | Environment | uv with a lockfile and a 7-day cooldown on new releases. |
-| Hooks | prek, with ruff (every rule), vulture, pyrefly (strict, 100% type coverage), import-linter, semgrep, the layout check, the dependency check and the check that each workaround has a written reason. |
+| Hooks | prek, with ruff (every rule), hadolint for each Dockerfile, vulture, pyrefly (strict, 100% type coverage), import-linter, semgrep, the layout check, the dependency check and the check that each workaround has a written reason. |
 | Tests | pytest with hypothesis, 100% branch coverage, and cosmic-ray mutation testing with zero surviving mutants. |
 | Run-time types | beartype on every function of the package. |
 | Commits | conventional commits, checked by a commit-msg hook and in CI, with a size limit. |

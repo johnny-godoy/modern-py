@@ -29,3 +29,16 @@ updates:
     commit-message:
       prefix: ci
       include: scope
+{% if 'service' in profiles %}
+  # The Dockerfile pins the base images by tag, so Dependabot raises them.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    # conventional commits: "build(deps): bump ..."
+    commit-message:
+      prefix: build
+      include: scope
+{% endif %}

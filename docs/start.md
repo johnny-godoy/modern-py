@@ -46,7 +46,7 @@ A profile adds a kind of application. You can choose more than one.
 
 | Profile | Adds |
 | --- | --- |
-| `service` | Litestar, msgspec, Granian, anyio, aiohttp and stamina. An `api` layer with a health route and its test, an HTTP adapter with retries, a `Dockerfile` and `just serve`. Mutation testing covers `core` and `domain` only, because the I/O layers make it slow. |
+| `service` | Litestar, msgspec, Granian, anyio, aiohttp and stamina. An `api` layer with a health route and its test, an HTTP adapter with retries, a `Dockerfile` that hadolint lints, a nightly trivy scan of the image, Dependabot updates of the base images, and `just serve`. Mutation testing covers `core` and `domain` only, because the I/O layers make it slow. |
 | `data` | polars, duckdb, pyarrow, marimo and altair. A duckdb adapter, an example notebook that the docs build exports, and the ruff ignores for marimo cells. |
 | `cli` | cyclopts, a `[project.scripts]` entry point and tests that call the command line. |
 
