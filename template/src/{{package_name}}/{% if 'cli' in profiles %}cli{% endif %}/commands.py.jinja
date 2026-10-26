@@ -8,7 +8,11 @@ import cyclopts
 from {{ package_name }}.domain.summary import summarize
 
 # return_value lets a test call the app and read the result, without a SystemExit after each command.
-app: cyclopts.App = cyclopts.App(name="{{ distribution_name }}", help="{{ description }}", result_action="return_value")
+app: cyclopts.App = cyclopts.App(
+    name="{{ distribution_name }}",
+    help="{{ description }}",
+    result_action="return_value",
+)
 
 
 @app.command

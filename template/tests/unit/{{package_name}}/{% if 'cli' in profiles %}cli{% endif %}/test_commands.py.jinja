@@ -5,23 +5,23 @@ import sys
 
 import pytest
 
-from {{ package_name }}.cli import app
+from {{ package_name }}.cli import commands
 from {{ package_name }}.core.exceptions import EmptyInputError
 
 
 def test_summary_writes_every_statistic(capsys: pytest.CaptureFixture[str]) -> None:
-    app.main(["summary", "3", "1", "2"])
+    commands.main(["summary", "3", "1", "2"])
     assert capsys.readouterr().out == "count=3 minimum=1.0 maximum=3.0 mean=2.0\n"
 
 
 def test_summary_without_values_raises_the_domain_error() -> None:
     with pytest.raises(EmptyInputError):
-        app.summary()
+        commands.summary()
 
 
 def test_the_entry_point_runs_the_app() -> None:
     result = subprocess.run(
-        [sys.executable, "-c", "from {{ package_name }}.cli.app import main; main(['summary', '4'])"],
+        [sys.executable, "-c", "from {{ package_name }}.cli.commands import main; main(['summary', '4'])"],
         capture_output=True,
         text=True,
         check=True,

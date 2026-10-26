@@ -1,0 +1,11 @@
+project_name: Sample Everything
+package_name: sample_everything
+description: A sample project with every profile and every feature.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-everything
+license: Proprietary
+required_approvals: 1
+profiles: [service, data, cli]
+features: [db, ml, aws, text, proofs, publish]

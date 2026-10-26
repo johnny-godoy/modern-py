@@ -1,0 +1,9 @@
+project_name: Sample Platform
+package_name: sample_platform
+description: A sample project with every profile.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-platform
+profiles: [service, data, cli]
+features: []
