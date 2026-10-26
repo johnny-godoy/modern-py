@@ -1,0 +1,25 @@
+"""The summary statistics of one column of a data frame."""
+
+import polars as pl
+
+from {{ package_name }}.domain.summary import Summary, summarize
+
+
+def summarize_column(frame: pl.DataFrame, column: str) -> Summary:
+    """Calculate the summary statistics of the values of one column, without the nulls.
+
+    Parameters
+    ----------
+    frame: pl.DataFrame
+        The data frame.
+    column: str
+        The name of a numeric column.
+
+    Returns
+    -------
+    Summary
+        The count, the smallest value, the largest value and the mean of the values that are not null.
+
+    """
+    values: list[float] = frame.get_column(column).drop_nulls().cast(pl.Float64).to_list()
+    return summarize(values)

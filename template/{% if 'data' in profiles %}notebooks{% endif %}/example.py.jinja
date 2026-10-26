@@ -1,0 +1,66 @@
+"""An example marimo notebook: a polars frame, a SQL query on a Parquet file, a summary and an altair chart."""
+
+import marimo
+
+__generated_with = "0.25.1"
+app = marimo.App(width="medium")
+
+
+@app.cell
+def _():
+    import tempfile
+    from pathlib import Path
+
+    import altair as alt
+    import marimo as mo
+    import polars as pl
+
+    from {{ package_name }}.adapters.parquet_query import query_parquet
+    from {{ package_name }}.domain.frame_summary import summarize_column
+
+    return Path, alt, mo, pl, query_parquet, summarize_column, tempfile
+
+
+@app.cell
+def _(mo) -> None:
+    mo.md("""
+    # Example
+
+    The notebook writes a small table to a Parquet file, queries it with SQL, and shows the summary and a chart.
+    """)
+
+
+@app.cell
+def _(Path, pl, tempfile):
+    folder = Path(tempfile.mkdtemp())
+    path = folder / "measurements.parquet"
+    pl.DataFrame({
+        "day": list(range(1, 11)),
+        "value": [3.0, 4.5, 4.0, 6.0, 5.5, 7.0, 6.5, 8.0, 7.5, 9.0],
+    }).write_parquet(
+        path,
+    )
+    return (path,)
+
+
+@app.cell
+def _(path, query_parquet):
+    frame = query_parquet(path, "SELECT day, value FROM data WHERE value > 4 ORDER BY day")
+    frame
+    return (frame,)
+
+
+@app.cell
+def _(frame, mo, summarize_column) -> None:
+    summary = summarize_column(frame, "value")
+    mo.md(f"The mean of the {summary.count} values is {summary.mean:.2f}.")
+
+
+@app.cell
+def _(alt, frame, mo):
+    chart = mo.ui.altair_chart(alt.Chart(frame).mark_line(point=True).encode(x="day:Q", y="value:Q"))
+    chart
+
+
+if __name__ == "__main__":
+    app.run()

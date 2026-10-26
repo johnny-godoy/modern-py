@@ -64,6 +64,8 @@ dependencies = [
 {% endif %}
 {% if data %}
     "polars>=2.0.0",
+    # duckdb converts a result to a polars frame through Arrow
+    "pyarrow>=26.0.0",
 {% endif %}
 {% if 'ml' in features %}
     "skl2onnx>=1.20.0",

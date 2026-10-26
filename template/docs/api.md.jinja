@@ -11,6 +11,16 @@
 ## Summary files
 
 ::: {{ package_name }}.adapters.summary_file
+{% if 'data' in profiles %}
+
+## Summary of a column
+
+::: {{ package_name }}.domain.frame_summary
+
+## SQL over Parquet files
+
+::: {{ package_name }}.adapters.parquet_query
+{% endif %}
 {% if 'service' in profiles %}
 
 ## HTTP client

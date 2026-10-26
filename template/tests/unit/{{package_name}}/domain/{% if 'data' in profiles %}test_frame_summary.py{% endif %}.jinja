@@ -1,0 +1,11 @@
+"""Tests for the summary of a column."""
+
+import polars as pl
+
+from {{ package_name }}.domain.frame_summary import summarize_column
+from {{ package_name }}.domain.summary import Summary
+
+
+def test_summarize_column_skips_the_nulls_and_reads_integers_as_floats() -> None:
+    frame = pl.DataFrame({"x": [3, None, 1, 2], "y": ["a", "b", "c", "d"]})
+    assert summarize_column(frame, "x") == Summary(count=3, minimum=1.0, maximum=3.0, mean=2.0)

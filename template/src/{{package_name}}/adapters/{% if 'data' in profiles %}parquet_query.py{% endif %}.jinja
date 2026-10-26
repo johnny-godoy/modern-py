@@ -1,0 +1,30 @@
+"""Query a Parquet file with SQL: an example of an adapter that reads tables with duckdb."""
+
+import os
+
+import duckdb
+import polars as pl
+
+# the name of the table that the query reads
+TABLE = "data"
+
+
+def query_parquet(path: str | os.PathLike[str], sql: str) -> pl.DataFrame:
+    """Run a SQL query over a Parquet file, in place, without a load into memory first.
+
+    Parameters
+    ----------
+    path: str | os.PathLike[str]
+        The Parquet file.
+    sql: str
+        The query. It reads the file as the table ``data``.
+
+    Returns
+    -------
+    pl.DataFrame
+        The result of the query.
+
+    """
+    with duckdb.connect() as connection:
+        connection.read_parquet(os.fspath(path)).create_view(TABLE)
+        return connection.sql(sql).pl()

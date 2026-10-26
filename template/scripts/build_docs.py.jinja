@@ -35,7 +35,9 @@ logger: structlog.typing.FilteringBoundLogger = structlog.get_logger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 {% if 'data' in profiles %}
-NOTEBOOKS: tuple[Path, ...] = tuple(sorted((ROOT / "notebooks").glob("*.py")))
+NOTEBOOKS: tuple[Path, ...] = tuple(
+    sorted(path for path in (ROOT / "notebooks").glob("*.py") if path.name != "__init__.py"),
+)
 EXPORT_DIR = ROOT / "docs" / "notebooks"
 # the notebooks run the package, so a change to any module makes the output stale
 PACKAGE: tuple[Path, ...] = tuple(sorted((ROOT / "src").rglob("*.py")))

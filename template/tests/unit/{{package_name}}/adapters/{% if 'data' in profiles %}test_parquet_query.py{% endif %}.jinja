@@ -1,0 +1,15 @@
+"""Tests for the SQL queries over Parquet files."""
+
+from pathlib import Path
+
+import polars as pl
+from polars.testing import assert_frame_equal
+
+from {{ package_name }}.adapters.parquet_query import query_parquet
+
+
+def test_query_parquet_reads_the_file_as_the_table_data(tmp_path: Path) -> None:
+    path = tmp_path / "values.parquet"
+    pl.DataFrame({"kind": ["a", "b", "a"], "x": [1.0, 2.0, 3.0]}).write_parquet(path)
+    result = query_parquet(str(path), "SELECT kind, sum(x) AS total FROM data GROUP BY kind ORDER BY kind")
+    assert_frame_equal(result, pl.DataFrame({"kind": ["a", "b"], "total": [4.0, 2.0]}))
