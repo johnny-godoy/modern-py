@@ -21,6 +21,12 @@
 
 ::: {{ package_name }}.adapters.parquet_query
 {% endif %}
+{% if 'ml' in features %}
+
+## Model files
+
+::: {{ package_name }}.adapters.model_store
+{% endif %}
 {% if 'db' in features %}
 
 ## Summary store

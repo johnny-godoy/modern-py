@@ -1,0 +1,86 @@
+"""Tests for the model files: a round trip in each format, and the refusal of an unknown type."""
+
+from pathlib import Path
+from typing import Self, cast
+
+import numpy as np
+import numpy.typing as npt
+import onnxruntime
+import pytest
+from sklearn.base import BaseEstimator, RegressorMixin
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.linear_model import LinearRegression
+from structlog.testing import capture_logs
+
+from {{ package_name }}.adapters.model_store import ModelFormat, SavedModel, load_model, save_model
+from {{ package_name }}.core.exceptions import UntrustedTypeError
+
+INPUT: npt.NDArray[np.float32] = np.arange(20, dtype=np.float32).reshape(10, 2)
+TARGET: npt.NDArray[np.float32] = INPUT.sum(axis=1)
+
+
+class Doubler(BaseEstimator, RegressorMixin):
+    """A model that no ONNX converter and no default skops.io type covers."""
+
+    def fit(self, features: npt.NDArray[np.float32], target: npt.NDArray[np.float32]) -> Self:
+        """Learn nothing.
+
+        Returns
+        -------
+        Self
+            The model.
+
+        """
+        del features, target
+        return self
+
+    @staticmethod
+    def predict(features: npt.NDArray[np.float32]) -> npt.NDArray[np.float32]:
+        """Double the first column.
+
+        Returns
+        -------
+        npt.NDArray[np.float32]
+            The predictions.
+
+        """
+        return features[:, 0] * 2
+
+
+def test_a_model_with_a_converter_is_saved_in_onnx_and_runs_in_onnxruntime(tmp_path: Path) -> None:
+    model = LinearRegression().fit(INPUT, TARGET)
+    with capture_logs() as logs:
+        saved = save_model(model, INPUT, tmp_path / "model")
+    assert saved == SavedModel(path=tmp_path / "model.onnx", format=ModelFormat.ONNX)
+    assert logs == [{"event": "model saved", "format": "ONNX", "path": str(saved.path), "log_level": "info"}]
+    session = load_model(saved.path)
+    assert isinstance(session, onnxruntime.InferenceSession)
+    # onnxruntime annotates each output as any of its value kinds, and a regressor returns an array
+    predictions = cast(npt.NDArray[np.float32], session.run(None, {session.get_inputs()[0].name: INPUT})[0])
+    np.testing.assert_allclose(predictions.ravel(), model.predict(INPUT), rtol=1e-5)
+
+
+def test_a_model_without_a_converter_is_saved_with_skops(tmp_path: Path) -> None:
+    model = KernelRidge().fit(INPUT, TARGET)
+    with capture_logs() as logs:
+        saved = save_model(model, INPUT, str(tmp_path / "model"))
+    assert saved == SavedModel(path=tmp_path / "model.skops", format=ModelFormat.SKOPS)
+    assert logs[0]["format"] == "SKOPS"
+    loaded = load_model(saved.path)
+    assert isinstance(loaded, KernelRidge)
+    np.testing.assert_allclose(loaded.predict(INPUT), model.predict(INPUT))
+
+
+def test_a_type_that_is_not_trusted_is_refused(tmp_path: Path) -> None:
+    saved = save_model(Doubler().fit(INPUT, TARGET), INPUT, tmp_path / "model")
+    name = f"{Doubler.__module__}.Doubler"
+    with pytest.raises(UntrustedTypeError, match=name):
+        load_model(saved.path)
+    with pytest.raises(UntrustedTypeError):
+        load_model(saved.path, trusted=["other.Type"])
+    assert isinstance(load_model(saved.path, trusted=[name]), Doubler)
+
+
+def test_an_unknown_suffix_is_refused(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match=r"\.bin"):
+        load_model(tmp_path / "model.bin")

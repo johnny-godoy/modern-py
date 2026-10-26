@@ -1,6 +1,6 @@
 """Tests for the errors."""
 
-from {{ package_name }}.core.exceptions import {{ ['EmptyInputError', error_class] | sort | join(', ') }}
+from {{ package_name }}.core.exceptions import {{ (['EmptyInputError', error_class] + (['UntrustedTypeError'] if 'ml' in features else [])) | sort | join(', ') }}
 
 
 def test_empty_input_error_names_the_input() -> None:
@@ -11,3 +11,12 @@ def test_empty_input_error_is_a_value_error_of_the_package() -> None:
     error = EmptyInputError(name="items")
     assert isinstance(error, {{ error_class }})
     assert isinstance(error, ValueError)
+{% if 'ml' in features %}
+
+
+def test_untrusted_type_error_names_the_file_and_the_types() -> None:
+    error = UntrustedTypeError(path="model.skops", types=["a.B", "c.D"])
+    assert str(error) == "model.skops holds types that are not trusted: a.B, c.D"
+    assert isinstance(error, {{ error_class }})
+    assert isinstance(error, ValueError)
+{% endif %}

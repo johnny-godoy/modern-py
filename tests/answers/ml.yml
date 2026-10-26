@@ -1,0 +1,9 @@
+project_name: Sample Models
+package_name: sample_models
+description: A sample library with saved models.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-models
+profiles: []
+features: [ml]

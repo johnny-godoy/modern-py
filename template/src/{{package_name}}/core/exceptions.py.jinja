@@ -22,3 +22,22 @@ class EmptyInputError({{ error_class }}, ValueError):
 
         """
         super().__init__(f"{name} is empty, but it must have at least one item")
+{% if 'ml' in features %}
+
+
+class UntrustedTypeError({{ error_class }}, ValueError):
+    """A model file holds a type that the caller does not trust, so loading it could run code."""
+
+    def __init__(self, path: str, types: list[str]) -> None:
+        """Build the message from the file and the refused types.
+
+        Parameters
+        ----------
+        path: str
+            The model file.
+        types: list[str]
+            The full names of the types that the caller does not trust.
+
+        """
+        super().__init__(f"{path} holds types that are not trusted: {', '.join(types)}")
+{% endif %}

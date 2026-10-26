@@ -68,6 +68,7 @@ dependencies = [
     "pyarrow>=26.0.0",
 {% endif %}
 {% if 'ml' in features %}
+    "scikit-learn>=1.9.1",
     "skl2onnx>=1.20.0",
     "skops>=0.16.0",
 {% endif %}
@@ -130,9 +131,11 @@ preview = true
 [tool.ruff.lint]
 # reason: copyright notices are an unusual requirement that this project does not impose on its source files. The
 # typing-only import rules are a recurring pattern: beartype reads every annotation of the package at run time, so an
-# import that only a hint uses is a run-time import, and a TYPE_CHECKING block would break the check.
+# import that only a hint uses is a run-time import, and a TYPE_CHECKING block would break the check. For the same
+# reason a type in a cast stays a name, not a string, so that the tools see the import.
 ignore = [
     "missing-copyright-notice",
+    "runtime-cast-value",
     "typing-only-first-party-import",
     "typing-only-standard-library-import",
     "typing-only-third-party-import",
@@ -220,9 +223,6 @@ dev = [
     "pytest-cov>=7.1.0",
     "pyyaml>=6.0.3",
     "ruff>=0.17.1",
-{% if 'ml' in features %}
-    "scikit-learn>=1.9.1",
-{% endif %}
     "semgrep>=1.181.0",
 {% if 'aws' in features %}
     "types-aioboto3[s3]>=15.5.0",

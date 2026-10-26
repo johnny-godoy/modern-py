@@ -1,0 +1,117 @@
+"""Save and load trained models: ONNX when a converter exists, and skops.io when none does.
+
+ONNX holds no code and runs in onnxruntime without the training stack. skops.io is the fallback for a model that no
+ONNX converter supports, and it loads only the types on an explicit allow list. pickle and joblib run code when they
+load a file, so the project bans them (``.claude/rules/libraries.md``).
+"""
+
+import enum
+import os
+from collections.abc import Collection
+from pathlib import Path
+from typing import cast
+
+import attrs
+import numpy as np
+import numpy.typing as npt
+import onnx
+import onnxruntime
+import skops.io
+import structlog
+from skl2onnx.common.exceptions import MissingShapeCalculator
+from skl2onnx.convert import to_onnx
+from sklearn.base import BaseEstimator
+
+from {{ package_name }}.core.exceptions import UntrustedTypeError
+
+logger: structlog.typing.FilteringBoundLogger = structlog.get_logger(__name__)
+
+
+class ModelFormat(enum.StrEnum):
+    """The file formats of a saved model. The value is the suffix of the file."""
+
+    ONNX = ".onnx"
+    SKOPS = ".skops"
+
+
+@attrs.frozen
+class SavedModel:
+    """A model file that ``save_model`` wrote.
+
+    Attributes
+    ----------
+    path: Path
+        The file, with the suffix of its format.
+    format: ModelFormat
+        The format that ``save_model`` chose.
+
+    """
+
+    path: Path
+    format: ModelFormat
+
+
+def save_model(model: BaseEstimator, sample: npt.NDArray[np.float32], path: str | os.PathLike[str]) -> SavedModel:
+    """Save a trained model in ONNX, or in skops.io if no ONNX converter supports the model.
+
+    Parameters
+    ----------
+    model: BaseEstimator
+        The trained scikit-learn model.
+    sample: npt.NDArray[np.float32]
+        Rows of input, from which the converter reads the type and the shape of the input.
+    path: str | os.PathLike[str]
+        The file, without a suffix. The function adds the suffix of the format that it chooses.
+
+    Returns
+    -------
+    SavedModel
+        The file and the format. The function also logs the format.
+
+    """
+    base = Path(path)
+    try:
+        # skl2onnx annotates the result as an estimator, but it returns the ONNX model
+        converted = cast(onnx.ModelProto, to_onnx(model, sample))
+    except MissingShapeCalculator:
+        saved = SavedModel(path=base.with_suffix(ModelFormat.SKOPS), format=ModelFormat.SKOPS)
+        skops.io.dump(model, saved.path)
+    else:
+        saved = SavedModel(path=base.with_suffix(ModelFormat.ONNX), format=ModelFormat.ONNX)
+        saved.path.write_bytes(converted.SerializeToString())
+    logger.info("model saved", format=saved.format.name, path=str(saved.path))
+    return saved
+
+
+def load_model(path: str | os.PathLike[str], trusted: Collection[str] = ()) -> object:
+    """Load a model that ``save_model`` saved.
+
+    Parameters
+    ----------
+    path: str | os.PathLike[str]
+        The file, with its suffix.
+    trusted: Collection[str]
+        The full names of the types that a skops.io file may hold beyond the types that skops.io trusts by default.
+
+    Returns
+    -------
+    object
+        An ``onnxruntime.InferenceSession`` for an ONNX file, or the model of a skops.io file.
+
+    Raises
+    ------
+    UntrustedTypeError
+        If a skops.io file holds a type that ``trusted`` does not name.
+
+    """
+    target = Path(path)
+    # the suffix names the format; ModelFormat raises a ValueError for any other suffix
+    if ModelFormat(target.suffix) is ModelFormat.ONNX:
+        session: object = onnxruntime.InferenceSession(str(target), providers=["CPUExecutionProvider"])
+        return session
+    untrusted: list[str] = skops.io.get_untrusted_types(file=target)
+    refused = sorted(set(untrusted) - set(trusted))
+    if refused:
+        raise UntrustedTypeError(path=str(target), types=refused)
+    model: object = skops.io.load(target, trusted=untrusted)
+    return model
