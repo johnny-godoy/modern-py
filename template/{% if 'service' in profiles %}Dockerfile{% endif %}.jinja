@@ -11,9 +11,10 @@ COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
 FROM python:{{ python_version }}-slim-trixie
-RUN useradd --create-home --uid 10001 service
+RUN useradd --create-home --uid 10001 --user-group service
 COPY --from=build --chown=service:service /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
-USER service
+# A numeric user, so the host and Kubernetes (runAsNonRoot) can tell that it is not root.
+USER 10001:10001
 EXPOSE 8000
 CMD ["granian", "--interface", "asgi", "--factory", "--host", "0.0.0.0", "--port", "8000", "{{ package_name }}.api.app:create_app"]

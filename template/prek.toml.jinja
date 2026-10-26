@@ -32,6 +32,14 @@ hooks = [
   { id = "end-of-file-fixer", priority = 13 },
 ]
 
+# hadolint lints each Dockerfile. hadolint-py downloads the binary, so the hook needs no Docker.
+[[repos]]
+repo = "https://github.com/AleksaC/hadolint-py"
+rev = "v2.15.1"
+hooks = [
+  { id = "hadolint", priority = 40 },
+]
+
 [[repos]]
 repo = "builtin"
 hooks = [
