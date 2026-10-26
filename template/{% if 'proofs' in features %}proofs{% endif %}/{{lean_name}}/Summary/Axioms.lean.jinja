@@ -1,0 +1,10 @@
+import {{ lean_name }}.Summary.Bounds
+
+/-!
+# Axiom check
+
+`lake build` prints the axioms of the main theorems.
+Each may use only `propext`, `Classical.choice` and `Quot.sound`.
+-/
+
+#print axioms {{ lean_name }}.Summary.Bounds.mean_between

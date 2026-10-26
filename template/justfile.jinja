@@ -61,3 +61,9 @@ migrate:
 test-db:
     PICCOLO_CONF=piccolo_conf uv run --frozen pytest --no-cov tests/unit/{{ package_name }}/adapters/test_summary_store.py
 {% endif %}
+{% if 'proofs' in features %}
+
+# Check the Lean proofs. Needs elan; see proofs/README.md.
+proofs:
+    cd proofs && lake build
+{% endif %}

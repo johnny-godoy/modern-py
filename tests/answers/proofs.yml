@@ -1,0 +1,9 @@
+project_name: Sample Proofs
+package_name: sample_proofs
+description: A sample library with proofs.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-proofs
+profiles: []
+features: [proofs]
