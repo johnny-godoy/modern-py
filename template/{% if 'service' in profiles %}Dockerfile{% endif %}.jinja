@@ -1,5 +1,5 @@
 # The image of the service: Granian serves the Litestar app on port 8000.
-FROM ghcr.io/astral-sh/uv:0.11-python{{ python_version }}-bookworm-slim AS build
+FROM ghcr.io/astral-sh/uv:0.11-python{{ python_version }}-trixie-slim AS build
 # Compiled bytecode starts faster, a copy works across the stages, and the image uses the Python of the base image.
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=0
 WORKDIR /app
@@ -10,7 +10,7 @@ COPY README.md {% if license != 'Proprietary' %}LICENSE {% endif %}./
 COPY src ./src
 RUN uv sync --frozen --no-dev --no-editable
 
-FROM python:{{ python_version }}-slim-bookworm
+FROM python:{{ python_version }}-slim-trixie
 RUN useradd --create-home --uid 10001 service
 COPY --from=build --chown=service:service /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH"
