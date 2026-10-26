@@ -1,0 +1,9 @@
+project_name: Sample Library
+package_name: sample_library
+description: A sample library.
+author_name: Ada Lovelace
+author_email: ada@example.com
+github_owner: example
+repo_name: sample-library
+profiles: []
+features: [publish]

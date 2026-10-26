@@ -1,0 +1,112 @@
+# Copier template for Python projects with the modern-py engineering standards.
+# Start a project: copier copy --trust gh:johnny-godoy/modern-py <directory>
+# Update a project: copier update --trust
+_min_copier_version: "9.4"
+_subdirectory: template
+_templates_suffix: .jinja
+_answers_file: .copier-answers.yml
+
+# Files that Copier copies only on the first copy. The project owns them after that, so `copier update` leaves them
+# alone. The version and the changelog change with each release, and the example code is the start of the project.
+_skip_if_exists:
+  - CHANGELOG.md
+  - ROADMAP.md
+
+_message_after_copy: |
+  The project is in {{ _copier_conf.dst_path }}. Next steps:
+
+  1. Create the repository {{ github_owner }}/{{ repo_name }} on GitHub and push the first commit.
+  2. Apply the ruleset: see .github/rulesets/README.md.
+  3. Run `just` to see the recipes.
+
+_tasks:
+  - command: git init --quiet --initial-branch=main
+    when: "{{ not _copier_conf.dst_path.joinpath('.git').exists() }}"
+  - command: uv lock --quiet
+  - command: uv sync --quiet
+  - command: uv run --frozen prek install
+
+project_name:
+  type: str
+  help: The project name, as people read it
+  validator: "{% if not project_name.strip() %}The project name is required.{% endif %}"
+
+package_name:
+  type: str
+  help: The Python import name of the package
+  default: "{{ project_name | lower | replace('-', '_') | replace(' ', '_') }}"
+  validator: >-
+    {% if not (package_name | regex_search('^[a-z][a-z0-9_]*$')) %}The package name must match ^[a-z][a-z0-9_]*$.{% endif %}
+
+distribution_name:
+  type: str
+  help: The distribution name on PyPI
+  default: "{{ package_name | replace('_', '-') }}"
+
+description:
+  type: str
+  help: One sentence that says what the project does
+  default: A Python project.
+
+author_name:
+  type: str
+  help: The name of the author
+
+author_email:
+  type: str
+  help: The email address of the author
+
+github_owner:
+  type: str
+  help: The GitHub user or organization that owns the repository
+
+repo_name:
+  type: str
+  help: The name of the GitHub repository
+  default: "{{ distribution_name }}"
+
+license:
+  type: str
+  help: The license of the project
+  choices:
+    - MIT
+    - Apache-2.0
+    - Proprietary
+  default: MIT
+
+python_version:
+  type: str
+  help: The minimum Python version. 3.14 is the newest that every dependency of the template supports.
+  choices:
+    - "3.14"
+  default: "3.14"
+
+profiles:
+  type: str
+  help: The profiles to add to the library base (choose none for a library)
+  multiselect: true
+  choices:
+    "service: a Litestar web service": service
+    "data: polars, duckdb and marimo notebooks": data
+    "cli: a cyclopts command line": cli
+  default: []
+
+features:
+  type: str
+  help: The opt-in features
+  multiselect: true
+  choices:
+    "db: Piccolo on PostgreSQL, with SQLite in the unit tests": db
+    "ml: saved models in ONNX, with skops.io as the fallback": ml
+    "aws: aioboto3, with moto in the tests": aws
+    "text: stringzilla for large text": text
+    "proofs: Lean proofs and Typst papers": proofs
+    "publish: PyPI trusted publishing": publish
+  # A library is the only profile that most often publishes a wheel.
+  default: "{{ ['publish'] if not profiles else [] }}"
+
+required_approvals:
+  type: int
+  help: The number of approving reviews that a pull request needs before it merges
+  default: 0
+  validator: "{% if required_approvals < 0 %}The number must be 0 or more.{% endif %}"

@@ -1,0 +1,43 @@
+name: Template
+
+# Render each answer set of tests/answers/ and run the checks of the rendered project: just check, just test and the
+# docs build. A rendered project must pass them on the first run, with no manual step after copier copy.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: template-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  render:
+    name: render (${{ matrix.answers }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        answers: [library]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+      - uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b # v3.1.0
+      - name: Set the git identity for the copier tasks
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Render and check
+        env:
+          ANSWERS: ${{ matrix.answers }}
+        run: scripts/render.sh "$ANSWERS" "$RUNNER_TEMP/rendered"
