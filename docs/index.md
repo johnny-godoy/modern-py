@@ -6,7 +6,6 @@ standard. When the template changes, each project takes the change with `copier 
 - [Start a project](start.md): the questions, the profiles, the features and the first steps.
 - [Update a project](update.md): take the changes of the template, and resolve a conflict.
 - [Library choices](libraries.md): the library for each need, the reason, and the guard that enforces it.
-- [Inventory](plans/inventory.md): where each part of the standard comes from.
 
 ## What a project gets
 
