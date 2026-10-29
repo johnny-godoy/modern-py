@@ -1,9 +1,0 @@
-ebaml
-baml
-openrouter
-talktoebm
-talk_to_ebm
-interpretml
-explainable boosting
-ebm2mcp
-titanic

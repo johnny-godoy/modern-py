@@ -11,8 +11,7 @@ testing, conventional commits, scriv changelog fragments and a release workflow.
 - `copier.yml` holds the questions, the tasks that run after a copy, and the Jinja settings.
 - `template/` is the project that Copier renders. A file with the suffix `.jinja` is rendered; every other file is
   copied as it is. A path part that renders to an empty string is skipped, which is how a profile adds files.
-- `tests/answers/` holds one answer file per CI matrix entry. `tests/forbidden-names.txt` lists the names that no
-  rendered project may contain.
+- `tests/answers/` holds one answer file per CI matrix entry.
 - `scripts/render.sh` renders an answer file into a directory and runs the checks of the rendered project.
 - `docs/` is the documentation of the template.
 </layout>
@@ -34,8 +33,6 @@ you commit.
 <conventions>
 - Test each change in a rendered project, because the template files are not valid Python before rendering. A change
   is done when `just render-all` passes: the CI matrix runs the same command.
-- Keep the rendered project free of EBaMl names. The reason: the template serves every domain.
-  `tests/forbidden-names.txt` is checked in CI.
 - Follow the rules in `template/.claude/rules/` for the template too: conventional, atomic commits, and the writing
   style of `writing-style.md` for the docs.
 - Put a profile file under a path part that renders empty when the profile is off, for example
