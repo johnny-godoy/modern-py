@@ -8,8 +8,8 @@
 # - `guard`: a guard that is not one of the three above, for example a semgrep rule. "Rule only" means that the choice
 #   depends on the project, so no tool can judge it.
 #
-# scripts/sync_banned.py also writes the table of .claude/rules/libraries.md from this file. The sync-banned hook fails
-# when a generated table is out of date. Run `uv run python -m scripts.sync_banned` to write them again.
+# The sync-banned hook fails when the generated ruff table is out of date. Run `uv run python -m scripts.sync_banned` to
+# write it again. .claude/rules/libraries.md points at this file and at the ruff table, and holds no copy.
 
 [[ban]]
 need = "Packaging, environments"
@@ -197,6 +197,13 @@ instead_of = "pandas"
 reason = "Speed, a lazy API, strict types and no index surprises. If a third-party library needs pandas, convert in one module, `adapters/pandas_interop.py`, with an inline `# ruff: ignore[banned-api]` and its reason."
 imports = ["pandas"]
 dependencies = ["pandas"]
+
+[[ban]]
+need = "Code that accepts a frame of any library (pandas, polars, pyarrow)"
+use = "narwhals"
+instead_of = "`isinstance` branches on `pd.DataFrame` and `pl.DataFrame`"
+reason = "One API over every frame library, so the caller keeps its own library and the code imports none of them. Use polars where the frame is yours."
+guard = "semgrep rule `no-frame-type-branches` (`isinstance` of a pandas or polars frame in `src/`)"
 
 [[ban]]
 need = "SQL over files"

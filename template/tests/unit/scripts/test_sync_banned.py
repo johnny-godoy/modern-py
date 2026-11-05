@@ -1,4 +1,4 @@
-"""Tests for the tables that scripts/banned.toml generates."""
+"""Tests for the ruff table that scripts/banned.toml generates."""
 
 from pathlib import Path
 
@@ -24,30 +24,18 @@ files = ["*.ipynb"]
 guard = "A note"
 """
 JSON: Ban = Ban(
-    need="JSON",
     use="orjson",
-    instead_of="json",
-    reason="Speed.",
     imports=("json", "ujson"),
     dependencies=("ujson",),
 )
 NOTEBOOKS: Ban = Ban(
-    need="Notebooks",
     use="marimo",
-    instead_of="Jupyter",
-    reason="Plain files.",
     files=("*.ipynb",),
-    guard="A note",
 )
 
 
 def test_load_bans_reads_every_entry_with_defaults() -> None:
     assert sync_banned.load_bans(TOML) == [JSON, NOTEBOOKS]
-
-
-def test_guards_name_every_kind_of_guard() -> None:
-    assert sync_banned.guards(JSON) == "Import ban: `json`, `ujson`; Dependency ban: `ujson`"
-    assert sync_banned.guards(NOTEBOOKS) == "File ban: `*.ipynb`; A note"
 
 
 def test_ruff_table_bans_each_module_with_the_replacement() -> None:
@@ -56,15 +44,6 @@ def test_ruff_table_bans_each_module_with_the_replacement() -> None:
         '"json".msg = "Use orjson. See .claude/rules/libraries.md."\n'
         '"ujson".msg = "Use orjson. See .claude/rules/libraries.md."\n'
     )
-
-
-def test_rule_table_has_one_row_for_each_choice() -> None:
-    assert sync_banned.rule_table([JSON, NOTEBOOKS]).splitlines() == [
-        "| Need | Use | Not | Reason | Guard |",
-        "| --- | --- | --- | --- | --- |",
-        "| JSON | orjson | json | Speed. | Import ban: `json`, `ujson`; Dependency ban: `ujson` |",
-        "| Notebooks | marimo | Jupyter | Plain files. | File ban: `*.ipynb`; A note |",
-    ]
 
 
 def test_replace_between_keeps_the_markers_and_the_rest() -> None:
@@ -80,7 +59,7 @@ def test_replace_between_fails_without_a_marker(text: str) -> None:
 
 @pytest.fixture
 def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
-    """Point the script at a project with stale tables in a temporary directory.
+    """Point the script at a project with a stale table in a temporary directory.
 
     Returns
     -------
@@ -89,30 +68,27 @@ def project(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
     """
     (tmp_path / "banned.toml").write_text(TOML, encoding="utf-8")
-    for name, begin, end in (
-        ("pyproject.toml", sync_banned.RUFF_BEGIN, sync_banned.RUFF_END),
-        ("libraries.md", sync_banned.RULE_BEGIN, sync_banned.RULE_END),
-    ):
-        (tmp_path / name).write_text(f"top\n{begin}stale\n{end}", encoding="utf-8")
+    (tmp_path / "pyproject.toml").write_text(
+        f"top\n{sync_banned.RUFF_BEGIN}stale\n{sync_banned.RUFF_END}",
+        encoding="utf-8",
+    )
     monkeypatch.setattr(sync_banned, "ROOT", tmp_path)
     monkeypatch.setattr(sync_banned, "BANNED", tmp_path / "banned.toml")
     monkeypatch.setattr(sync_banned, "PYPROJECT", tmp_path / "pyproject.toml")
-    monkeypatch.setattr(sync_banned, "RULE", tmp_path / "libraries.md")
     return tmp_path
 
 
 def test_check_fails_on_a_stale_table_and_changes_nothing(project: Path, capsys: pytest.CaptureFixture[str]) -> None:
     assert sync_banned.main(["--check"]) == 1
-    assert "pyproject.toml, libraries.md" in capsys.readouterr().err
+    assert "pyproject.toml" in capsys.readouterr().err
     assert "stale" in (project / "pyproject.toml").read_text(encoding="utf-8")
 
 
-def test_main_writes_the_tables_and_then_the_check_passes(project: Path) -> None:
+def test_main_writes_the_table_and_then_the_check_passes(project: Path) -> None:
     assert sync_banned.main() == 0
     assert '"json".msg' in (project / "pyproject.toml").read_text(encoding="utf-8")
-    assert "| JSON | orjson |" in (project / "libraries.md").read_text(encoding="utf-8")
     assert sync_banned.main(["--check"]) == 0
 
 
-def test_the_tables_of_this_repository_are_up_to_date() -> None:
+def test_the_table_of_this_repository_is_up_to_date() -> None:
     assert sync_banned.main(["--check"]) == 0

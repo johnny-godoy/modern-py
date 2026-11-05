@@ -155,10 +155,10 @@ hooks = [
   },
   {
     id = "sync-banned",
-    name = "the tables generated from scripts/banned.toml are up to date",
+    name = "the table generated from scripts/banned.toml is up to date",
     language = "system",
     entry = "uv run python -m scripts.sync_banned --check",
-    files = "^(pyproject\\.toml|scripts/(banned\\.toml|sync_banned\\.py)|\\.claude/rules/libraries\\.md)$",
+    files = "^(pyproject\\.toml|scripts/(banned\\.toml|sync_banned\\.py))$",
     pass_filenames = false,
     priority = 30,
   },

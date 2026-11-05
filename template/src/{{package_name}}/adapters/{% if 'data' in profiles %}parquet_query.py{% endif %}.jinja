@@ -27,4 +27,6 @@ def query_parquet(path: str | os.PathLike[str], sql: str) -> pl.DataFrame:
     """
     with duckdb.connect() as connection:
         connection.read_parquet(os.fspath(path)).create_view(TABLE)
-        return connection.sql(sql).pl()
+        # duckdb types pl() as Any, so the annotation gives the result its type
+        result: pl.DataFrame = connection.sql(sql).pl()
+    return result
