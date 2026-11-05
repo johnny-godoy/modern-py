@@ -131,6 +131,22 @@ rules:
     paths:
       include: ["/src/"]
 
+  - id: {{ rule_prefix }}-no-frame-type-branches
+    languages: [python]
+    severity: ERROR
+    message: >-
+      A branch on a pandas or polars frame type repeats the work of narwhals. Take the frame with
+      narwhals.from_native and call the narwhals API (.claude/rules/libraries.md).
+    pattern-either:
+      - pattern: isinstance($X, pd.DataFrame)
+      - pattern: isinstance($X, pl.DataFrame)
+      - pattern: isinstance($X, pl.LazyFrame)
+      - pattern: isinstance($X, pandas.DataFrame)
+      - pattern: isinstance($X, polars.DataFrame)
+      - pattern: isinstance($X, polars.LazyFrame)
+    paths:
+      include: ["/src/"]
+
   - id: {{ rule_prefix }}-no-sleep-loop
     languages: [python]
     severity: ERROR

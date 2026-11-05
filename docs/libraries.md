@@ -41,6 +41,7 @@ table is out of date.
 | Async tests | the anyio pytest plugin | pytest-asyncio | One event-loop model across the code and the tests. | Dependency ban: `pytest-asyncio`, `pytest-trio` |
 | CLI | cyclopts | click, typer, argparse | Type hints are the interface, with good help text and no decorator for each option. | Import ban: `click`, `typer`, `argparse`; Dependency ban: `click`, `typer` |
 | Data frames | polars | pandas | Speed, a lazy API, strict types and no index surprises. If a third-party library needs pandas, convert in one module, `adapters/pandas_interop.py`, with an inline `# ruff: ignore[banned-api]` and its reason. | Import ban: `pandas`; Dependency ban: `pandas` |
+| Code that accepts a frame of any library (pandas, polars, pyarrow) | narwhals | `isinstance` branches on `pd.DataFrame` and `pl.DataFrame` | One API over every frame library, so the caller keeps its own library and the code imports none of them. Use polars where the frame is yours. | semgrep rule `no-frame-type-branches` (`isinstance` of a pandas or polars frame in `src/`) |
 | SQL over files | duckdb | pandas SQL, sqlite for analytics | It queries Parquet files and polars frames in place. | Rule only |
 | File format for tables | Parquet | CSV | Types and compression. | Rule only |
 | Charts in notebooks | altair | matplotlib, seaborn | Declarative, and interactive inside marimo (`mo.ui.altair_chart`). | Rule only |

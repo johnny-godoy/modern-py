@@ -123,6 +123,17 @@ def now():
     return naive, utc, instant
 
 
+def accepts(frame):
+    # ruleid: {{ rule_prefix }}-no-frame-type-branches
+    if isinstance(frame, pl.DataFrame):
+        return "polars"
+    # ruleid: {{ rule_prefix }}-no-frame-type-branches
+    if isinstance(frame, pandas.DataFrame):
+        return "pandas"
+    # ok: {{ rule_prefix }}-no-frame-type-branches
+    return narwhals.from_native(frame).columns
+
+
 def poll(client):
     # ruleid: {{ rule_prefix }}-no-sleep-loop
     while True:

@@ -199,6 +199,13 @@ imports = ["pandas"]
 dependencies = ["pandas"]
 
 [[ban]]
+need = "Code that accepts a frame of any library (pandas, polars, pyarrow)"
+use = "narwhals"
+instead_of = "`isinstance` branches on `pd.DataFrame` and `pl.DataFrame`"
+reason = "One API over every frame library, so the caller keeps its own library and the code imports none of them. Use polars where the frame is yours."
+guard = "semgrep rule `no-frame-type-branches` (`isinstance` of a pandas or polars frame in `src/`)"
+
+[[ban]]
 need = "SQL over files"
 use = "duckdb"
 instead_of = "pandas SQL, sqlite for analytics"
