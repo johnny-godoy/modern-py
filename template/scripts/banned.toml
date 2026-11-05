@@ -8,8 +8,8 @@
 # - `guard`: a guard that is not one of the three above, for example a semgrep rule. "Rule only" means that the choice
 #   depends on the project, so no tool can judge it.
 #
-# scripts/sync_banned.py also writes the table of .claude/rules/libraries.md from this file. The sync-banned hook fails
-# when a generated table is out of date. Run `uv run python -m scripts.sync_banned` to write them again.
+# The sync-banned hook fails when the generated ruff table is out of date. Run `uv run python -m scripts.sync_banned` to
+# write it again. .claude/rules/libraries.md points at this file and at the ruff table, and holds no copy.
 
 [[ban]]
 need = "Packaging, environments"

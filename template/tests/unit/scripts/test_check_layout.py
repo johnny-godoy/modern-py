@@ -136,9 +136,9 @@ def test_main_reports_a_banned_file(tmp_path: Path, capsys: pytest.CaptureFixtur
 
 
 BANS = [
-    Ban(need="Task runner", use="just", instead_of="make", reason="Plain recipes.", files=("Makefile",)),
-    Ban(need="Notebooks", use="marimo", instead_of="Jupyter", reason="Plain files.", files=("*.ipynb",)),
-    Ban(need="Docs", use="Zensical", instead_of="Sphinx", reason="Fast builds.", files=("docs/conf.py",)),
+    Ban(use="just", files=("Makefile",)),
+    Ban(use="marimo", files=("*.ipynb",)),
+    Ban(use="Zensical", files=("docs/conf.py",)),
 ]
 
 

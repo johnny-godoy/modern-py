@@ -6,7 +6,7 @@ import pytest
 from scripts import check_dependencies
 from scripts.sync_banned import Ban
 
-BANS = [Ban(need="Lint", use="ruff", instead_of="black", reason="One tool.", dependencies=("black", "Pre_Commit"))]
+BANS = [Ban(use="ruff", dependencies=("black", "Pre_Commit"))]
 
 
 @pytest.mark.parametrize(("name", "normal"), [("Pre_Commit", "pre-commit"), ("zope.interface", "zope-interface")])
