@@ -83,7 +83,10 @@ def save_model(model: BaseEstimator, sample: npt.NDArray[np.float32], path: str 
     return saved
 
 
-def load_model(path: str | os.PathLike[str], trusted: Collection[str] = ()) -> object:
+def load_model(
+    path: str | os.PathLike[str],
+    trusted: Collection[str] = (),
+) -> onnxruntime.InferenceSession | BaseEstimator:
     """Load a model that ``save_model`` saved.
 
     Parameters
@@ -95,7 +98,7 @@ def load_model(path: str | os.PathLike[str], trusted: Collection[str] = ()) -> o
 
     Returns
     -------
-    object
+    onnxruntime.InferenceSession | BaseEstimator
         An ``onnxruntime.InferenceSession`` for an ONNX file, or the model of a skops.io file.
 
     Raises
@@ -107,11 +110,10 @@ def load_model(path: str | os.PathLike[str], trusted: Collection[str] = ()) -> o
     target = Path(path)
     # the suffix names the format; ModelFormat raises a ValueError for any other suffix
     if ModelFormat(target.suffix) is ModelFormat.ONNX:
-        session: object = onnxruntime.InferenceSession(str(target), providers=["CPUExecutionProvider"])
-        return session
+        return onnxruntime.InferenceSession(str(target), providers=["CPUExecutionProvider"])
     untrusted: list[str] = skops.io.get_untrusted_types(file=target)
     refused = sorted(set(untrusted) - set(trusted))
     if refused:
         raise UntrustedTypeError(path=str(target), types=refused)
-    model: object = skops.io.load(target, trusted=untrusted)
+    model: BaseEstimator = skops.io.load(target, trusted=untrusted)
     return model
