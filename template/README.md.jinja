@@ -21,9 +21,11 @@ environment and the git hooks. `just` lists every recipe.
 | Recipe | What it does |
 | --- | --- |
 | `just check` | Runs every prek hook on every file. |
+| `just clones` | Fails on a copy-paste clone that `origin/main` lacks. |
 | `just test` | Runs the unit tests with the 100% branch coverage gate. |
+| `just test-docs` | Runs the code examples of the docs and the docstrings. |
 | `just test-one <test>` | Runs one test without the coverage gate. |
-| `just mutate` | Runs mutation testing on the modules that changed since `origin/main`. |
+| `just mutate` | Runs mutation testing on the lines that changed since `origin/main`. |
 | `just docs` | Builds the docs as CI does. |
 | `just changelog` | Adds a changelog fragment. |
 {% if 'service' in profiles %}

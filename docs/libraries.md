@@ -45,6 +45,7 @@ file `template/.claude/rules/libraries.md.jinja`, and the table below.
 | Charts in notebooks | altair | matplotlib, seaborn | Declarative, and interactive inside marimo (`mo.ui.altair_chart`). | Rule only |
 | Notebooks | marimo | Jupyter | Plain `.py` files, reactive, with diffs that a reviewer can read and that ruff can lint. | File ban: `*.ipynb` |
 | String-heavy work | stringzilla | `str`, `re` loops | SIMD search, split and hashing on large text. | Rule only, and only when the project processes large text |
+| Tests of the code in the docs | sybil | doctest | One parser for the Markdown docs and the docstrings, with setup that the reader does not see. | Import ban: `doctest` |
 | Docs | Zensical with mkdocstrings | Sphinx, MkDocs | Fast builds, a TOML config and a modern theme. | File ban: `mkdocs.yml`, `docs/conf.py` |
 | Task runner | just | make, invoke, tox, nox | Plain recipes with arguments, and no tab or `.PHONY` traps. | File ban: `Makefile`, `tox.ini`, `noxfile.py`, `tasks.py` |
 | Changelog | scriv fragments | a hand-edited `CHANGELOG.md`, towncrier | No merge conflicts, and the release workflow collects the fragments. | The check-changelog hook and the fragment workflow |

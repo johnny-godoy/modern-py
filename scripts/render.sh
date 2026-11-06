@@ -17,5 +17,6 @@ if [ "$checks" != "--no-checks" ]; then
   cd "$dest"
   just check
   just test
+  just test-docs
   just docs
 fi

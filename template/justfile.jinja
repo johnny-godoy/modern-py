@@ -22,6 +22,10 @@ clones base="origin/main":
 test *args:
     uv run --frozen pytest {% raw %}{{args}}{% endraw %}
 
+# Run the code examples of README.md, docs/ and the docstrings with Sybil.
+test-docs *args:
+    uv run --frozen pytest --no-cov README.md docs src {% raw %}{{args}}{% endraw %}
+
 # Run one test, or one test file, without the coverage gate.
 test-one target:
     uv run --frozen pytest --no-cov {% raw %}{{target}}{% endraw %}

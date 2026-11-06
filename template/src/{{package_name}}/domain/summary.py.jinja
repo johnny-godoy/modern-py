@@ -48,6 +48,11 @@ def summarize(values: Sequence[float]) -> Summary:
     EmptyInputError
         If ``values`` is empty.
 
+    Examples
+    --------
+    >>> summarize([1.0, 2.0, 6.0])
+    Summary(count=3, minimum=1.0, maximum=6.0, mean=3.0)
+
     """
     if not values:
         raise EmptyInputError(name="values")

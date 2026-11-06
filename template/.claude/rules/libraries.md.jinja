@@ -14,6 +14,7 @@ a pickled model, a Jupyter notebook). The choices below have no import to ban, s
 | Packaging, environments | uv | pip, poetry, pipenv |
 | Git hooks | prek | pre-commit |
 | Lint, format and static types | ruff (select ALL), pyrefly (strict) | black, isort, flake8, pylint, mypy, pyright |
+| Tests of the code in the docs | sybil | pytest's `--doctest-modules` and `--doctest-glob` |
 | Docs, changelog, mutation testing | Zensical, scriv fragments, cosmic-ray | Sphinx, MkDocs, towncrier, mutmut |
 {% if 'service' in profiles %}
 | ASGI server | Granian | uvicorn, daphne, hypercorn, gunicorn |

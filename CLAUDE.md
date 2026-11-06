@@ -18,7 +18,7 @@ testing, conventional commits, scriv changelog fragments and a release workflow.
 
 <commands>
 ```bash
-just render library /tmp/out        # render tests/answers/library.yml into /tmp/out and run just check, test, docs
+just render library /tmp/out        # render tests/answers/library.yml into /tmp/out and run just check, test, test-docs, docs
 just render-all                      # every answer file, as the CI matrix does
 just update-check                    # copier update from the previous tag on a rendered project
 ```

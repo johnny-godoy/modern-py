@@ -15,6 +15,7 @@ just                 # list the recipes
 just sync            # install the locked environment and the git hooks
 just check           # every prek hook: ruff, vulture, deptry, pyrefly, import-linter, semgrep, the layout and ignore checks
 just test            # unit tests in tests/unit; fails below 100% branch coverage
+just test-docs       # the code examples of README.md, docs/ and the docstrings, with Sybil
 just test-one tests/unit/{{ package_name }}/domain/test_summary.py::test_name   # one test, without the coverage gate
 just clones          # fail on a copy-paste clone that origin/main lacks; needs Node.js
 just mutate          # cosmic-ray on the lines that changed since origin/main; CI requires zero survivors
@@ -52,6 +53,9 @@ Rules in `.claude/rules/` load automatically. Follow them, and keep these points
 - `beartype` checks the type hints of `{{ package_name }}` at run time, so write exact hints (`.claude/rules/types.md`).
 - Search before you add a shared `Protocol`, `ABC` or cross-module helper, and register a new shared contract in
   `architecture/abstractions.yml` (`.claude/rules/reuse.md`), because a second contract for one job drifts from the first.
+- The `python` code blocks of `README.md` and `docs/*.md` and the docstring `Examples` run as tests (`just test-docs`),
+  so the site shows only code that works. Put setup that the reader does not need in an
+  `<!-- invisible-code-block: python -->` comment.
 - Give every variable, parameter and coefficient a descriptive name (`word_weight`, not `alpha`; `bin_index`, not
   `i`). See `.claude/rules/naming.md`.
 - Ship each bug fix with a guard: a unit test or a semgrep rule that fails on the old code (`.claude/rules/bug-fixes.md`).
