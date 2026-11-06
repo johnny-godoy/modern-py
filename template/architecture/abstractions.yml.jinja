@@ -1,0 +1,29 @@
+# Registry of the shared abstractions of src/{{ package_name }}. Read .claude/rules/reuse.md before you edit it.
+#
+# Register a contract or an entry point that more than one module uses. Do not register a private helper or a class
+# that only one module uses. Search first: `uv run python -m scripts.check_abstractions --search <words>`.
+# `uv run python -m scripts.check_abstractions --check` validates this file against the source.
+#
+# Fields: id (kebab-case, stable), responsibility (one sentence), owner (module or package that owns the symbol),
+# symbol (module:Name), consumers (descriptive, grants no import right), keywords (for the search), status (active or
+# deprecated), context (production unless the entry says otherwise).
+schema_version: 1
+
+capabilities:
+  - id: base-error
+    responsibility: Be the base class of every error that the package raises on purpose
+    owner: {{ package_name }}.core
+    symbol: {{ package_name }}.core.exceptions:{{ error_class }}
+    consumers: [{{ package_name }}.domain, {{ package_name }}.adapters]
+    keywords: [error, exception, raise, base]
+    status: active
+
+  - id: summary
+    responsibility: Hold the summary statistics of a sequence of values
+    owner: {{ package_name }}.domain
+    symbol: {{ package_name }}.domain.summary:Summary
+    consumers: [{{ package_name }}.adapters]
+    keywords: [summary, statistics, mean, count]
+    status: active
+
+exceptions: []

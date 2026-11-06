@@ -14,6 +14,16 @@ no period, at most 72 characters. A squash merge makes the title the commit on m
 
 -
 
+## Abstraction reuse
+
+<!-- Answer for a change that adds a shared Protocol, ABC, service, adapter or cross-module helper. Write "None" for any
+other change. A reviewer judges the reasons. CI checks only the registry and the clones. -->
+
+- New shared abstraction? [ ] No [ ] Yes
+- Existing candidates inspected (`uv run python -m scripts.check_abstractions --search <words>`):
+- Capability ID and owner in `architecture/abstractions.yml` (if new):
+- Why the existing abstractions cannot be reused:
+
 ## Changelog
 
 <!-- Choose one. -->

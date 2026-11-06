@@ -16,7 +16,8 @@ just sync            # install the locked environment and the git hooks
 just check           # every prek hook: ruff, vulture, deptry, pyrefly, import-linter, semgrep, the layout and ignore checks
 just test            # unit tests in tests/unit; fails below 100% branch coverage
 just test-one tests/unit/{{ package_name }}/domain/test_summary.py::test_name   # one test, without the coverage gate
-just mutate          # cosmic-ray on the modules that changed since origin/main; CI requires zero survivors
+just clones          # fail on a copy-paste clone that origin/main lacks; needs Node.js
+just mutate          # cosmic-ray on the lines that changed since origin/main; CI requires zero survivors
 just docs            # build the docs as CI does: strict, and it fails on a docstring warning
 just changelog       # add a changelog fragment
 {% if 'service' in profiles %}
@@ -29,6 +30,7 @@ just test-db         # run the database tests on the database of DATABASE_URL (P
 {% if 'proofs' in features %}
 just proofs          # check the Lean proofs; needs elan, see .claude/rules/proofs.md
 {% endif %}
+uv run python -m scripts.check_abstractions --search error base     # find a shared contract before you add one
 ```
 </commands>
 
@@ -48,6 +50,8 @@ Rules in `.claude/rules/` load automatically. Follow them, and keep these points
   import fails at once.
 - Return an attrs class, not a `dict` or a `tuple` of fields (`.claude/rules/types.md`). Semgrep enforces it.
 - `beartype` checks the type hints of `{{ package_name }}` at run time, so write exact hints (`.claude/rules/types.md`).
+- Search before you add a shared `Protocol`, `ABC` or cross-module helper, and register a new shared contract in
+  `architecture/abstractions.yml` (`.claude/rules/reuse.md`), because a second contract for one job drifts from the first.
 - Ship each bug fix with a guard: a unit test or a semgrep rule that fails on the old code (`.claude/rules/bug-fixes.md`).
 - Commit in small steps, each with one purpose and a conventional commit message (`type(scope): description`).
   Write the PR title the same way, and fill the PR template (`.claude/rules/commits-and-prs.md`). Hooks and CI check it.
