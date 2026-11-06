@@ -163,7 +163,8 @@ jobs:
       - name: Scan with base rules
         run: |
           mkdir -p "$CI_LOGS"
-          uvx --from semgrep==1.131.0 --with 'setuptools<81' semgrep scan --config p/default --error --metrics=off \
+          # semgrep 1.131.0 fails to import on Python 3.14 (protobuf), which uv picks by default on the runner
+          uvx --python 3.12 --from semgrep==1.131.0 --with 'setuptools<81' semgrep scan --config p/default --error --metrics=off \
             --json-output="$CI_LOGS/semgrep.json" 2>&1 | tee "$CI_LOGS/semgrep.log"
       - uses: ./.github/actions/failure-report
         if: failure()

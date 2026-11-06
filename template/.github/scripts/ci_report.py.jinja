@@ -248,7 +248,7 @@ def semgrep() -> str:
     rows.extend(f"| error | | {err.get('message', err)} |" for err in data.get("errors", []))
     fix = (
         "**Fix:** change the flagged code as the message says."
-        " Full rule text: `uvx semgrep scan --config p/default`.\n"
+        " Full rule text: `uvx --python 3.12 semgrep scan --config p/default`.\n"
         "False positive? Add `# nosemgrep: <rule id>` on the line with a short reason."
     )
     return "\n".join(rows) + "\n\n" + fix
