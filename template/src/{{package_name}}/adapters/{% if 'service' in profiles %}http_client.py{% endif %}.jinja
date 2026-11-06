@@ -4,13 +4,15 @@ import aiohttp
 import orjson
 import stamina
 
+from {{ package_name }}.core.custom_types import JSONValue
+
 # The attempts and the timeout bound the total wait of one call: the caller gets an error and not a hang.
 ATTEMPTS = 3
 TIMEOUT_SECONDS = 10.0
 
 
 @stamina.retry(on=aiohttp.ClientError, attempts=ATTEMPTS, timeout=TIMEOUT_SECONDS)
-async def fetch_json(session: aiohttp.ClientSession, url: str) -> object:
+async def fetch_json(session: aiohttp.ClientSession, url: str) -> JSONValue:
     """Read the JSON body of a URL, and try again after a network error or an error status.
 
     When every attempt fails, the function raises the ``aiohttp.ClientError`` of the last attempt.
@@ -24,10 +26,10 @@ async def fetch_json(session: aiohttp.ClientSession, url: str) -> object:
 
     Returns
     -------
-    object
+    JSONValue
         The parsed body.
 
     """
     async with session.get(url, raise_for_status=True) as response:
-        body: object = orjson.loads(await response.read())
+        body: JSONValue = orjson.loads(await response.read())
     return body

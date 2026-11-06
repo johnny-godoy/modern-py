@@ -82,6 +82,42 @@ hooks = [
     priority = 42,
   },
   {
+    id = "deptry",
+    name = "deptry: declared and imported dependencies agree",
+    language = "system",
+    # src only: the check covers the runtime dependencies of the published package. Scripts and tests use the dev
+    # group, so they have no declared-dependency contract.
+    entry = "uv run deptry src",
+    files = "^(src/.*\\.py|pyproject\\.toml|uv\\.lock)$",
+    pass_filenames = false,
+    priority = 43,
+  },
+  {
+    id = "jscpd",
+    name = "jscpd: copy-paste in src stays under 1%",
+    language = "node",
+    additional_dependencies = ["jscpd@5.4.2"],
+    # This hook keeps the total share under 1% and needs no git history. A small new clone can still pass beneath that
+    # limit, so check-new-clones (CI and the manual stage) fails on each clone that the base branch lacks. Tests repeat
+    # setup on purpose, so they are not scanned.
+    entry = "jscpd src --format python --min-tokens 50 --min-lines 5 --threshold 1 --reporters console --no-colors",
+    files = "^src/.*\\.py$",
+    pass_filenames = false,
+    priority = 44,
+  },
+  {
+    id = "check-new-clones",
+    name = "jscpd: the change adds no clone to src",
+    language = "system",
+    # Manual stage: it needs the base branch in the local clone, which a commit hook cannot assume. CI runs it on every
+    # pull request. Locally: `just clones`.
+    entry = "uv run python -m scripts.check_new_clones",
+    files = "^(src/.*\\.py|scripts/check_new_clones\\.py)$",
+    pass_filenames = false,
+    stages = ["manual"],
+    priority = 45,
+  },
+  {
     id = "pyrefly",
     name = "pyrefly",
     language = "system",
@@ -127,6 +163,24 @@ hooks = [
     priority = 50,
   },
   {
+    id = "check-abstractions",
+    name = "registry of shared abstractions matches the source",
+    language = "system",
+    entry = "uv run python -m scripts.check_abstractions --check",
+    files = "^(architecture/|src/.*\\.py|scripts/check_abstractions\\.py|pyproject\\.toml)",
+    pass_filenames = false,
+    priority = 50,
+  },
+  {
+    id = "check-contract-overlap",
+    name = "no public Protocol or ABC repeats another",
+    language = "system",
+    entry = "uv run python -m scripts.check_contract_overlap",
+    files = "^(architecture/|src/.*\\.py|scripts/check_(abstractions|contract_overlap)\\.py|pyproject\\.toml)",
+    pass_filenames = false,
+    priority = 51,
+  },
+  {
     id = "import-linter",
     name = "import-linter: layers and vendor SDK limits",
     language = "system",
@@ -143,24 +197,6 @@ hooks = [
     always_run = true,
     pass_filenames = false,
     priority = 50,
-  },
-  {
-    id = "check-dependencies",
-    name = "no banned dependency",
-    language = "system",
-    entry = "uv run python -m scripts.check_dependencies",
-    files = "^(pyproject\\.toml|scripts/banned\\.toml)$",
-    pass_filenames = false,
-    priority = 50,
-  },
-  {
-    id = "sync-banned",
-    name = "the table generated from scripts/banned.toml is up to date",
-    language = "system",
-    entry = "uv run python -m scripts.sync_banned --check",
-    files = "^(pyproject\\.toml|scripts/(banned\\.toml|sync_banned\\.py))$",
-    pass_filenames = false,
-    priority = 30,
   },
   {
     id = "semgrep-rules-test",

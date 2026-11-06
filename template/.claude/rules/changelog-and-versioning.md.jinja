@@ -39,7 +39,8 @@ in `pyproject.toml`. `ROADMAP.md` lists the planned versions.
 - The public API is the public Python names{% if 'cli' in profiles %}, the commands and flags of the command line{% endif %}{% if 'service' in profiles %}, the HTTP routes with their
   request and response schemas{% endif %}. Log events and the text of error messages are not part of it.
 - `{{ package_name }}.experimental` is outside the public API. It can change in a MINOR or PATCH at any time. Say so in
-  its docstrings.
+  its docstrings. The layout check accepts layers only, so add `experimental` to the layers contract and to
+  `architecture.md` with its first feature.
 - From 1.0.0, deprecate before you remove: keep the old name for at least one MINOR with a `DeprecationWarning`, and add
   a `Deprecated` entry. Remove it only in the next MAJOR.
 - Never invent a version. `scripts/release.py` derives it from the table above, and a milestone PR takes it from

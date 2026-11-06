@@ -1,0 +1,11 @@
+"""Named type aliases for the values that recur across the layers.
+
+A hint of ``object`` or ``Any`` checks nothing, so a recurring kind of value gets a named alias here
+(``.claude/rules/types.md``).
+"""
+
+from collections.abc import Mapping, Sequence
+
+# A value that orjson reads from or writes to JSON. The containers are abstract because the hints of inputs are
+# abstract. The numeric tower lets float cover int, and bool is named because JSON has true and false as a type.
+type JSONValue = str | bool | float | Sequence[JSONValue] | Mapping[str, JSONValue] | None

@@ -12,7 +12,8 @@ import-linter limits what a module imports. This check limits where a module liv
 5. The test tree mirrors the source tree. Each module has a test file at the same path under
    ``tests/unit/<package>``, with ``test_`` before the name. Each test file and test directory has a source module or
    package at the same path.
-6. No file matches a file ban of ``scripts/banned.toml``, for example a ``Makefile`` or a pickled model.
+6. No file matches a glob of ``BANNED_FILES``, for example a ``Makefile`` or a pickled model. Each glob belongs to a
+   tool that ``.claude/rules/libraries.md`` replaces.
 
 Run it from the repo root: ``uv run python -m scripts.check_layout``.
 """
@@ -21,11 +22,9 @@ import ast
 import sys
 import tomllib
 from collections import Counter
-from collections.abc import Collection, Iterable, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from pathlib import Path
 from typing import Any
-
-from scripts.sync_banned import BANNED, Ban, load_bans
 
 ROOT = Path(__file__).resolve().parent.parent
 # Directories of tools and builds: the project does not write their files, so a banned name there is not a choice.
@@ -34,6 +33,27 @@ TOP_LEVEL_MODULES = frozenset({"__init__.py"})
 LAYERS_CONTRACT = "layers"
 # The tests of a package file ``__init__.py`` cannot be named ``test___init__.py``, so they have a short name.
 INIT_TESTS = {"test_init.py": "__init__.py"}
+# Each glob with the tool to use instead. A glob with a ``/`` matches the path from the root, and a glob without one
+# matches the file name in any directory.
+BANNED_FILES = {
+    "requirements*.txt": "uv",
+    "setup.py": "uv",
+    "setup.cfg": "uv",
+    "poetry.lock": "uv",
+    "Pipfile": "uv",
+    "Pipfile.lock": "uv",
+    ".pre-commit-config.yaml": "prek",
+    "*.pkl": "msgspec, orjson or skops.io",
+    "*.pickle": "msgspec, orjson or skops.io",
+    "*.joblib": "msgspec, orjson or skops.io",
+    "*.ipynb": "marimo",
+    "mkdocs.yml": "Zensical",
+    "docs/conf.py": "Zensical",
+    "Makefile": "just",
+    "tox.ini": "just",
+    "noxfile.py": "just",
+    "tasks.py": "just",
+}
 
 
 def layer_names(pyproject: dict[str, Any]) -> list[str]:
@@ -189,8 +209,8 @@ def project_files(root: Path) -> list[Path]:
     )
 
 
-def banned_file_problems(files: Iterable[Path], bans: Iterable[Ban]) -> list[str]:
-    """List the files that match a file ban.
+def banned_file_problems(files: Iterable[Path], banned: Mapping[str, str]) -> list[str]:
+    """List the files that match a banned glob.
 
     A glob with a ``/`` matches the path from the root. A glob without one matches the file name in any directory.
 
@@ -198,8 +218,8 @@ def banned_file_problems(files: Iterable[Path], bans: Iterable[Ban]) -> list[str
     ----------
     files: Iterable[Path]
         The paths of the files, relative to the root.
-    bans: Iterable[Ban]
-        The library choices.
+    banned: Mapping[str, str]
+        Each banned glob with the tool to use instead.
 
     Returns
     -------
@@ -207,11 +227,10 @@ def banned_file_problems(files: Iterable[Path], bans: Iterable[Ban]) -> list[str
         One message for each banned file, with the replacement.
 
     """
-    globs = [(glob, ban.use) for ban in bans for glob in ban.files]
     return [
         f"{path.as_posix()}: a banned file ({glob}). Use {use} instead (.claude/rules/libraries.md)."
         for path in files
-        for glob, use in globs
+        for glob, use in banned.items()
         if path.full_match(glob) or ("/" not in glob and path.match(glob))
     ]
 
@@ -239,7 +258,7 @@ def main(argv: Sequence[str] = ()) -> int:
         layer_names(pyproject),
         TOP_LEVEL_MODULES,
     )
-    problems.extend(banned_file_problems(project_files(root), load_bans(BANNED.read_text(encoding="utf-8"))))
+    problems.extend(banned_file_problems(project_files(root), BANNED_FILES))
     for problem in problems:
         sys.stderr.write(f"{problem}\n")
     return 1 if problems else 0

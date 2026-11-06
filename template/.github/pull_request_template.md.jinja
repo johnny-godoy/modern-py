@@ -14,6 +14,16 @@ no period, at most 72 characters. A squash merge makes the title the commit on m
 
 -
 
+## Abstraction reuse
+
+<!-- Answer for a change that adds a shared Protocol, ABC, service, adapter or cross-module helper. Write "None" for any
+other change. A reviewer judges the reasons. CI checks only the registry and the clones. -->
+
+- New shared abstraction? [ ] No [ ] Yes
+- Existing candidates inspected (`uv run python -m scripts.check_abstractions --search <words>`):
+- Capability ID and owner in `architecture/abstractions.yml` (if new):
+- Why the existing abstractions cannot be reused:
+
 ## Changelog
 
 <!-- Choose one. -->
@@ -39,7 +49,9 @@ None.
 <!-- Tick what you ran. Say why for each check that you could not run. -->
 
 - [ ] `just check`
+- [ ] `just clones` (if `src/` changed; needs `origin/main` and Node.js)
 - [ ] `just test` (100% coverage)
+- [ ] `just test-docs` (the documentation examples)
 - [ ] `just mutate` (if `src/` changed)
 {% if 'db' in features %}
 - [ ] `just test-db` on PostgreSQL (if the database adapters or the migrations changed)

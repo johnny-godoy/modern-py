@@ -25,8 +25,8 @@ env:
 #   changes: decides which gates a pull request needs (dorny/paths-filter); a push to main runs every gate
 #   stage 1: prek, trufflehog, semgrep, trivy
 #   stage 2: pytest{% endraw %}{{ " and db" if "db" in features }}{% raw %} (need prek only, so they start while the scanners still run)
-#   stage 3: mutation (needs every gate above; slowest). Only modules changed against the base run; mutation-weekly.yml
-#            runs all.
+#   stage 3: mutation (needs every gate above; slowest). Only the lines changed against the base run;
+#            mutation-weekly.yml runs all.
 #
 # The ruleset requires every gate on every pull request, so a gate that the changed files cannot affect is skipped with
 # a job-level `if`, not removed with a workflow-level `paths:` filter. GitHub counts a skipped job as a pass, and a
@@ -64,6 +64,9 @@ jobs:
             python:
               - "src/**"
               - "tests/**"
+              - "conftest.py"
+              - "README.md"
+              - "docs/*.md"
               - "scripts/**"
               - "semgrep/**"
               - "pyproject.toml"
@@ -95,6 +98,15 @@ jobs:
         run: |
           mkdir -p "$CI_LOGS"
           just check --show-diff-on-failure --color never 2>&1 | tee "$CI_LOGS/prek.log"
+      - name: Check that the pull request adds no clone
+        # The checkout holds the merge of the pull request. The base branch must exist locally for the comparison, so
+        # fetch it first. scripts/check_new_clones.py fails, and does not pass, if the base is missing.
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          git fetch --no-tags --depth=1 origin "+refs/heads/${BASE_REF}:refs/remotes/origin/${BASE_REF}"
+          just clones "origin/${BASE_REF}" 2>&1 | tee -a "$CI_LOGS/prek.log"
       - uses: ./.github/actions/failure-report
         if: failure()
         with:
@@ -195,6 +207,9 @@ jobs:
         run: |
           mkdir -p "$CI_LOGS"
           just test --color=no 2>&1 | tee "$CI_LOGS/pytest.log"
+      - name: Run the documentation examples
+        # the code blocks of the Markdown files and the doctests of the docstrings (tests/docs/conftest.py)
+        run: just test-docs --color=no 2>&1 | tee -a "$CI_LOGS/pytest.log"
       - uses: ./.github/actions/failure-report
         if: failure()
         with:

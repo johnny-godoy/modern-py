@@ -1,0 +1,20 @@
+"""Tests of the named type aliases."""
+
+import pytest
+from beartype import BeartypeConf
+from beartype.door import is_bearable
+
+from {{ package_name }}.core.custom_types import JSONValue
+
+# the configuration of the package hook, whose numeric tower lets an int fit a float
+CONF: BeartypeConf = BeartypeConf(is_pep484_tower=True)
+
+
+@pytest.mark.parametrize("value", [None, True, 1, 1.5, "text", [1, "two"], {"key": [None, {"inner": 2.0}]}])
+def test_a_json_value_fits_the_alias(value: JSONValue) -> None:
+    assert is_bearable(value, JSONValue, conf=CONF)
+
+
+@pytest.mark.parametrize("value", [{1, 2}, {1: "a key that is not a string"}, {"key": object()}])
+def test_a_value_that_json_cannot_hold_does_not_fit(value: set[int] | dict[int, str] | dict[str, object]) -> None:
+    assert not is_bearable(value, JSONValue, conf=CONF)
