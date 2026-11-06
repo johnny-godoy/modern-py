@@ -19,6 +19,25 @@ Adding a case (a file format, a user role, a report kind) must not need an edit 
 - Apply: put the cases in a table (`_FORMATS`) or in one class per case, and look the case up by key. A chain that
   tests the same flag in many places (`if admin:`) is the sign to use classes.
 
+### Tell, don't ask
+
+Tell an object what to do, and let its class decide how. Do not ask for its type and decide in the caller.
+
+- Why: a branch on the type (`if isinstance(x, A): ... elif isinstance(x, B): ...`) is a chain on one value. Each new
+  class needs an edit of every such branch, and a missed branch fails only at run time.
+- Apply: give the classes a common method, abstract in the base class, and call it (`kind.describe()`). If the package
+  does not own the classes, register one function per class with `functools.singledispatch`.
+- Every way to ask makes the same branch: `isinstance`, `issubclass`, `type(x) is`, `type(x) in`, `x.__class__`,
+  `type(x).__name__`, `hasattr(x, ...)` (a duck check asks too), and a `match` with two or more class patterns.
+- A table keyed by type (`HANDLERS[type(x)](x)`) is a hand-made `singledispatch` that ignores subclasses. A
+  `try`/`except AttributeError` around a call that some classes lack is a branch that hides in an exception. Use a
+  method or `singledispatch` instead. No guard covers these two forms, so look for them in review.
+- One check that narrows a union where a value enters the package (a string or a list for one parameter) is not a
+  branch on the type. Keep it, and give it a comment if the reason is not clear.
+- The semgrep rule `{{ rule_prefix }}-polymorphism-not-type-branches` in `semgrep/rules.yml` enforces this in `src/`.
+  If a type branch must stay (a parsed record of an untyped format), add
+  `# nosemgrep: {{ rule_prefix }}-polymorphism-not-type-branches -- <reason>` on the line of the first branch.
+
 ## L: a subtype keeps the promise of its base
 
 A subclass or a fake works wherever its base works: same argument types, same result type, no new errors.
