@@ -52,6 +52,8 @@ Rules in `.claude/rules/` load automatically. Follow them, and keep these points
 - `beartype` checks the type hints of `{{ package_name }}` at run time, so write exact hints (`.claude/rules/types.md`).
 - Search before you add a shared `Protocol`, `ABC` or cross-module helper, and register a new shared contract in
   `architecture/abstractions.yml` (`.claude/rules/reuse.md`), because a second contract for one job drifts from the first.
+- Give every variable, parameter and coefficient a descriptive name (`word_weight`, not `alpha`; `bin_index`, not
+  `i`). See `.claude/rules/naming.md`.
 - Ship each bug fix with a guard: a unit test or a semgrep rule that fails on the old code (`.claude/rules/bug-fixes.md`).
 - Commit in small steps, each with one purpose and a conventional commit message (`type(scope): description`).
   Write the PR title the same way, and fill the PR template (`.claude/rules/commits-and-prs.md`). Hooks and CI check it.
