@@ -44,8 +44,8 @@ import-linter, `scripts/check_layout.py` and the semgrep rules in `semgrep/` enf
 Rules in `.claude/rules/` load automatically. Follow them, and keep these points in mind:
 
 - Run `just check` and `just test` before you report a task as done. The hooks enforce the quality bar of the project.
-- Use the libraries of `.claude/rules/libraries.md`. ruff, `scripts/check_dependencies.py` and the layout check ban
-  the alternatives, so a banned import fails at once.
+- Use the libraries of `.claude/rules/libraries.md`. ruff and the layout check ban the alternatives, so a banned
+  import fails at once.
 - Return an attrs class, not a `dict` or a `tuple` of fields (`.claude/rules/types.md`). Semgrep enforces it.
 - `beartype` checks the type hints of `{{ package_name }}` at run time, so write exact hints (`.claude/rules/types.md`).
 - Ship each bug fix with a guard: a unit test or a semgrep rule that fails on the old code (`.claude/rules/bug-fixes.md`).

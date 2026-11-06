@@ -21,8 +21,6 @@ testing, conventional commits, scriv changelog fragments and a release workflow.
 just render library /tmp/out        # render tests/answers/library.yml into /tmp/out and run just check, test, docs
 just render-all                      # every answer file, as the CI matrix does
 just update-check                    # copier update from the previous tag on a rendered project
-just sync-tables                     # write the tables of template/scripts/banned.toml into the template and docs/
-just check-tables                    # fail when one of those tables is out of date
 ```
 
 `scripts/render.sh <name> <dir> --no-checks` renders without the checks, which is fast for a look at the output. Each

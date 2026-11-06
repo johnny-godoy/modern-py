@@ -4,7 +4,6 @@ from pathlib import Path
 
 import pytest
 from scripts import check_layout
-from scripts.sync_banned import Ban
 
 TOP = {"__init__.py"}
 
@@ -135,11 +134,7 @@ def test_main_reports_a_banned_file(tmp_path: Path, capsys: pytest.CaptureFixtur
     assert "Makefile: a banned file" in capsys.readouterr().err
 
 
-BANS = [
-    Ban(use="just", files=("Makefile",)),
-    Ban(use="marimo", files=("*.ipynb",)),
-    Ban(use="Zensical", files=("docs/conf.py",)),
-]
+BANS = {"Makefile": "just", "*.ipynb": "marimo", "docs/conf.py": "Zensical"}
 
 
 @pytest.mark.parametrize("path", ["Makefile", "sub/Makefile", "notebooks/analysis.ipynb", "docs/conf.py"])

@@ -6,7 +6,6 @@ name: Template
 #   proofs:   lake build of the Lean proofs of the proofs feature
 #   docker:   the image of the service profile
 #   update:   copier update from the previous tag to this commit, with no conflict, and the checks after it
-#   tables:   the tables that template/scripts/banned.toml generates are up to date in the template and the docs
 # A rendered project must pass on the first run, with no manual step after copier copy.
 on:
   push:
@@ -40,15 +39,6 @@ jobs:
       - name: List the answer sets
         id: answers
         run: echo "answers=$(find tests/answers -name '*.yml' -exec basename {} .yml \; | sort | jq -R . | jq -sc .)" >> "$GITHUB_OUTPUT"
-
-  tables:
-    name: tables
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup
-      - run: just check-tables
 
   render:
     name: render (${{ matrix.answers }})

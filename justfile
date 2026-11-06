@@ -17,10 +17,3 @@ render-all dir="/tmp/modern-py-render":
 update-check dir="/tmp/modern-py-update":
     scripts/update_check.sh {{dir}}
 
-# Write the tables that template/scripts/banned.toml generates into the template files.
-sync-tables:
-    python3 scripts/sync_tables.py
-
-# Fail when a table that template/scripts/banned.toml generates is out of date.
-check-tables:
-    python3 scripts/sync_tables.py --check
