@@ -13,7 +13,7 @@ same recipes, so a local run fails exactly when CI fails.
 ```bash
 just                 # list the recipes
 just sync            # install the locked environment and the git hooks
-just check           # every prek hook: ruff, vulture, pyrefly, import-linter, semgrep, the layout and ignore checks
+just check           # every prek hook: ruff, vulture, deptry, pyrefly, import-linter, semgrep, the layout and ignore checks
 just test            # unit tests in tests/unit; fails below 100% branch coverage
 just test-one tests/unit/{{ package_name }}/domain/test_summary.py::test_name   # one test, without the coverage gate
 just mutate          # cosmic-ray on the modules that changed since origin/main; CI requires zero survivors
